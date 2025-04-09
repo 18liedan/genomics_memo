@@ -1,8 +1,8 @@
 # nig_supercomputer
 Basic information about the NIG supercomputer and how to use it.
 遺伝研スパコンの基本的な使い方をまとめました。
-Last updated: April 9, 2025
 
+Last updated: April 9, 2025
 ## General usage | 使い方
 #### Steps on getting account, etc. | 利用開始までの流れはこちら
 https://sc.ddbj.nig.ac.jp/guides/from_application_to_approval/
