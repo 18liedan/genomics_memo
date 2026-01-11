@@ -5,7 +5,7 @@ Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for v
 Scripts for general bioinformatic workflows are as follows:
 
 📖 [00_refprep.md](./00_refprep.md) describes how I prepared my reference genomes.
-- [get_masked_regions.py](./get_masked_regions.py) is a custom python script used for extracting coordinate of masked sites in the reference genome.
+- [get_masked_regions.py](./get_masked_regions.py) is a custom python script used for extracting coordinates of masked sites in the reference genome. This should be placed in the same directory as your reference genome.
 
 🗺️ [01_trimming-mapping.sh](./01_trimming-mapping.sh) is a script to process all raw genomes.
 
