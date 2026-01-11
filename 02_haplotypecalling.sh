@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+#This script automates variant calling from high quality samples, to gather reliable sites to be later used in BQSR.
+
 ###############################################################################
 # RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
