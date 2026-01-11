@@ -1,0 +1,93 @@
+The following commands are the ones I used manually to prepare my reference genomes. Theoretically, I can make this into a bash script but I purposely kept it as manual commands because each genome differs in nature. As examples, I will show what I did with my golden eagle and mountain hawk-eagle genomes.
+
+### Golden Eagle
+#### Download reference genome from NCBI
+- bAquChr1.4: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_900496995.4/
+- I used the RefSeq (GCF_900496995.4) because it had already removed the mitochondria.
+- It is a chromosome assembly, with 26 autosomal chromosomes, and W & Z chromosomes, as well as several unplaced scaffolds
+- After download, check the md5sum to make sure it is not corrupted.
+- To make it easier to use, I renamed it to ge_ref.fna
+
+#### Check if it is already masked or now - this genome was already soft-masked!
+`head -100 ge_ref.fna`
+
+#### Sort contigs by length
+`seqkit sort -l -r ge_ref.fna > ge_ref_sort.fa`
+
+#### Remove short sequences (< 100 kb)
+`seqkit seq -m 100000 ge_ref_sort.fa > ge_ref_sort_lr.fa`
+
+#### Make list of new chromosome labels, excluding sex chromosomes, but including unplaced scaffolds which were longer than 100 kb, which I will rename as chr27-chr47.
+```
+cat > rename.tsv <<EOF
+NC_044004.1	chr1
+NC_044005.1	chr2
+NC_044006.1	chr3
+NC_044007.1	chr4
+NC_044008.1	chr5
+NC_044009.1	chr6
+NC_044010.1	chr7
+NC_044011.1	chr8
+NC_044012.1	chr9
+NC_044013.1	chr10
+NC_044014.1	chr11
+NC_044015.1	chr12
+NC_044016.1	chr13
+NC_044017.1	chr14
+NC_044018.1	chr15
+NC_044019.1	chr16
+NC_044020.1	chr17
+NC_044021.1	chr18
+NC_044022.1	chr19
+NC_044023.1	chr20
+NC_044024.1	chr21
+NC_044025.1	chr22
+NC_044026.1	chr23
+NC_044027.1	chr24
+NC_044028.1	chr25
+NC_044029.1	chr26
+NW_024470381.1	chr27
+NW_024470382.1	chr28
+NW_024470383.1	chr29
+NW_024470384.1	chr30
+NW_024470385.1	chr31
+NW_024470386.1	chr32
+NW_024470387.1	chr33
+NW_024470388.1	chr34
+NW_024470389.1	chr35
+NW_024470390.1	chr36
+NW_024470391.1	chr37
+NW_024470392.1	chr38
+NW_024470393.1	chr39
+NW_024470394.1	chr40
+NW_024470395.1	chr41
+NW_024470396.1	chr42
+NW_024470397.1	chr43
+NW_024470398.1	chr44
+NW_024470399.1	chr45
+NW_024470400.1	chr46
+NW_024470401.1	chr47
+EOF
+```
+
+#### Extract current IDs to a temporary list for filtering
+`cut -f1 rename.tsv > keep_ids.txt`
+
+#### Run seqkit pipeline to rename chromosomes
+```
+seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
+	seqkit replace -p "^(\S+)" -r "{kv}" -k rename.tsv > ge_ref_softmasked_auto.fa
+```
+
+#### Output and check names of chromosomes
+`seqkit seq -n ge_ref_softmasked_auto.fa > ge_autochr.txt`
+
+#### Extract soft-masked sites using a [python script](./get_masked_regions.py) for downstream analyses where you want to remove repeated sites
+`python3 get_masked_regions.py ge_ref_softmasked_auto.fa > ge_ref_masked_regions.bed`
+
+#### Index final reference genome
+```
+bwa-mem2 index ge_ref_softmasked_auto.fa
+samtools faidx ge_ref_softmasked_auto.fa
+gatk CreateSequenceDictionary -R ge_ref_softmasked_auto.fa -O ge_ref_softmasked_auto.dict
+```
