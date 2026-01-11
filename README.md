@@ -1,4 +1,4 @@
-#### 🧬 This is my repository for keeping track of my bioinformatics workflow for my conseravtion genomics projects. 🧬
+#### 🧬 This is my repository for keeping track of my bioinformatics workflows that I use in conseravtion genomics projects. 🧬
 
 Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random notes and tips/tricks that may help you.
 
@@ -11,7 +11,7 @@ Scripts for general bioinformatic workflows are as follows:
 
 🔡 [02_haplotypecalling.sh](./02_haplotypecalling.sh) is a script to call, merge, genotype, and filter reliable variants.
 
-⚖️ 03_bqsr.sh is a script to perform BQSR on all samples.
+⚖️ [03_bqsr.sh](./03_bqsr.sh) is a script to perform BQSR on all samples.
 
 🔡 04_finalhaplotypecalling.sh is a script to call, merge, genotype, and filter final variants for downstream analyses.
 
