@@ -2,7 +2,7 @@ The following commands are the ones I used manually to prepare my reference geno
 
 ### Golden Eagle
 #### Download reference genome from NCBI
-- bAquChr1.4: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_900496995.4/
+- bAquChr1.4 (Scottish individual): https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_900496995.4/
 - I used the RefSeq (GCF_900496995.4) because it had already removed the mitochondria.
 - It is a chromosome assembly, with 26 autosomal chromosomes, and W & Z chromosomes, as well as several unplaced scaffolds
 - After download, check the md5sum to make sure it is not corrupted.
