@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+#This script automates BQSR steps for each sample.
+
 ###############################################################################
 # RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
