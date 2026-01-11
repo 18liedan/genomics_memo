@@ -73,7 +73,7 @@ EOF
 #### Extract current IDs to a temporary list for filtering
 `cut -f1 rename.tsv > keep_ids.txt`
 
-#### Run seqkit pipeline to rename chromosomes
+#### Run seqkit to rename chromosomes
 ```
 seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
 	seqkit replace -p "^(\S+)" -r "{kv}" -k rename.tsv > ge_ref_softmasked_auto.fa
@@ -104,9 +104,11 @@ gatk CreateSequenceDictionary -R ge_ref_softmasked_auto.fa -O ge_ref_softmasked_
 #### Remove short sequences (< 100 kb)
 `seqkit seq -m 100000 mhe_ref_sort.fa > mhe_ref_sort_lr.fa`
 
-#### Relabel scaffold number and check
-`seqkit replace -p .+ -r "Scaffold{nr}" mhe_ref_sort_lr.fa > mhe_ref_sort_lr_scaff.fa`
-`seqkit seq -n mhe_ref_sort_lr_scaff.fa > mhe_scaff.txt`
+#### Relabel scaffold number and check stats
+```
+seqkit replace -p .+ -r "Scaffold{nr}" mhe_ref_sort_lr.fa > mhe_ref_sort_lr_scaff.fa
+seqkit fx2tab -n -l -g -i mhe_ref_softmasked.fa > mhe_ref_stats.txt
+```
 
 #### Run RepeatMasker
 ```
@@ -133,7 +135,8 @@ Scaffold1 and Scaffold42 had high identity and low E value.
 ```
 seqkit grep -v -p "Scaffold1" mhe_ref_softmasked.fa > mhe_ref_softmasked_autotemp.fa
 seqkit grep -v -p "Scaffold42" mhe_ref_softmasked_autotemp.fa >  mhe_ref_softmasked_auto.fa
-rm  mhe_ref_softmasked_autotemp.fa
+rm  mhe_ref_softmasked_autotemp.fa #remove temporary file
+seqkit seq -n gfb_ref_softmasked_auto.fa  #check if it is really removed
 ```
 
 #### Index final reference genome
@@ -142,3 +145,5 @@ bwa-mem2 index mhe_ref_softmasked_auto.fa
 samtools faidx mhe_ref_softmasked_auto.fa
 gatk CreateSequenceDictionary -R mhe_ref_softmasked_auto.fa -O mhe_ref_softmasked_auto.dict
 ```
+#### Extract soft-masked sites using a [python script](./get_masked_regions.py) for downstream analyses where you want to remove repeated sites
+`python3 get_masked_regions.py mhe_ref_softmasked_auto.fa > mhe_ref_masked_regions.bed`
