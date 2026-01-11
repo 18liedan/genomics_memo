@@ -1,4 +1,4 @@
-The following commands are the ones I used manually to prepare my reference genomes. Theoretically, I can make this into a bash script but I purposely kept it as manual commands because each genome differs in nature. As examples, I will show what I did with my golden eagle and mountain hawk-eagle genomes.
+The following commands are the ones I used manually to prepare my reference genomes. Theoretically, I can make this into a bash script but I purposely kept it as manual commands because each genome differs in nature. As examples, I will show what I did with my golden eagle and mountain hawk-eagle genomes. Most steps assume you are in the reference genome directory, so please customize accordingly for your own use.
 
 ### Golden Eagle
 #### Download reference genome from NCBI
@@ -8,7 +8,7 @@ The following commands are the ones I used manually to prepare my reference geno
 - After download, check the md5sum to make sure it is not corrupted.
 - To make it easier to use, I renamed it to ge_ref.fna
 
-#### Check if it is already masked or now - this genome was already soft-masked!
+#### Check if it is already masked or not - this genome was already soft-masked!
 `head -100 ge_ref.fna`
 
 #### Sort contigs by length
@@ -90,4 +90,55 @@ seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
 bwa-mem2 index ge_ref_softmasked_auto.fa
 samtools faidx ge_ref_softmasked_auto.fa
 gatk CreateSequenceDictionary -R ge_ref_softmasked_auto.fa -O ge_ref_softmasked_auto.dict
+```
+
+### Mountain Hawk-Eagle
+#### Genome provided by the National Institute of Environmental Studies, Japan
+- It is a scaffold level assembly with unlabelled W & Z chromosomes
+- As with any other genome, check the md5sum to make sure it is not corrupted.
+- To make it easier to use, I renamed it to mhe_ref.fna
+
+#### Sort contigs by length
+`seqkit sort -l -r mhe_ref.fna > mhe_ref_sort.fa`
+
+#### Remove short sequences (< 100 kb)
+`seqkit seq -m 100000 mhe_ref_sort.fa > mhe_ref_sort_lr.fa`
+
+#### Relabel scaffold number and check
+`seqkit replace -p .+ -r "Scaffold{nr}" mhe_ref_sort_lr.fa > mhe_ref_sort_lr_scaff.fa`
+`seqkit seq -n mhe_ref_sort_lr_scaff.fa > mhe_scaff.txt`
+
+#### Run RepeatMasker
+```
+RepeatMasker mhe_ref_sort_lr_scaff.fa -species "nisaetus nipalensis" -xsmall -no_is -pa 32 -e hmmer
+#-no_is: skip bacterial insertion element check
+#-pa: threads
+#-e: search engine
+#-xsmall: softmasking
+#result was: mhe_ref_sort_lr_scaff.fa.masked
+#renamed to: mhe_ref_softmasked.fa
+```
+
+#### Filter out sex chromosomes
+Make local blast database to find scaffs with sex-linked genes by blasting golden eagle w/z chr sequences.
+(chrW_ge_head.fa & chrZ_ge_head.fa taken from bAquChr1.4 genome, chd_bAquChr1.4.fna from NCBI database)
+```
+makeblastdb -in mhe_ref_softmasked.fa -out mhedb -dbtype nucl -parse_seqids
+blastn -db mhedb -query chrW_ge_head.fa -out blastedseq_W_out.txt
+blastn -db mhedb -query chrZ_ge_head.fa -out blastedseq_Z_out.txt
+```
+Scaffold1 and Scaffold42 had high identity and low E value.
+
+#### Remove sex chromosomes from reference genome
+```
+seqkit grep -v -p "Scaffold1" mhe_ref_softmasked.fa > mhe_ref_softmasked_autotemp.fa
+seqkit grep -v -p "Scaffold42" mhe_ref_softmasked_autotemp.fa >  mhe_ref_softmasked_auto.fa
+rm  mhe_ref_softmasked_autotemp.fa
+```
+
+#### Index final reference genome
+```
+bwa-mem2 index mhe_ref_softmasked_auto.fa
+samtools faidx mhe_ref_softmasked_auto.fa
+gatk CreateSequenceDictionary -R mhe_ref_softmasked_auto.fa -O mhe_ref_softmasked_auto.dict
 ```
