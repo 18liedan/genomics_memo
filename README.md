@@ -1,4 +1,4 @@
-### This is my repository for keeping track of genomics notes.
+#### This is my repository for keeping track of my bioinformatics workflow for my conseravtion genomics projects.
 
 ##### Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random notes and tips/tricks that may help you.
 
