@@ -81,7 +81,7 @@ seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
 # Output and check names of chromosomes
 seqkit seq -n ge_ref_softmasked_auto.fa > ge_autochr.txt
 
-# Extract soft-masked sites using a [python script](https://github.com/18liedan/genomics_memo/blob/main/get_masked_regions.py) for downstream analyses where you want to remove repeated sites
+# Extract soft-masked sites using a [python script](get_masked_regions.py) for downstream analyses where you want to remove repeated sites
 python3 get_masked_regions.py ge_ref_softmasked_auto.fa > ge_ref_masked_regions.bed
 
 # Index final reference genome
