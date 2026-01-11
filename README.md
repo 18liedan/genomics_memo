@@ -1,6 +1,6 @@
 ### This is my repository for keeping track of genomics notes.
 
-##### Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random memos.
+##### Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random notes and tips/tricks that may help you.
 
 ##### Scripts for general bioinformatic workflows are uploaded as follows:
 
