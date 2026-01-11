@@ -13,15 +13,15 @@ JAVA_OPTS="-Xmx64g"      # 12 * 64GB = 768GB
 COHORT_JAVA_OPTS="-Xmx256g" 
 
 # PATHS
-REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
-SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples_hq.txt"
-MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed"
+REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa" #your reference genome
+SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples_hq.txt" #your list of high coverage, reliable samples
+MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed" #your repeat masked sites
 # Coverage TSV (Assumes format: SampleID [tab] CoverageValue)
 COVERAGE_STATS="${SPECIES_ID}_stats/${SPECIES_ID}_coverage_summary.tsv"
 
-BAM_DIR="${SPECIES_ID}_mapped"
-GVCF_DIR="${SPECIES_ID}_gvcf"
-VCF_DIR="${SPECIES_ID}_vcf"
+BAM_DIR="${SPECIES_ID}_mapped" #directory with mapped and processed genomes
+GVCF_DIR="${SPECIES_ID}_gvcf" #directory to save per-sample vcf.gz outputs from haplotypecaller
+VCF_DIR="${SPECIES_ID}_vcf" #directory to save filtered vcf.gz
 SAMPLE_VCF_DIR="${VCF_DIR}/individual_samples"
 
 mkdir -p "$GVCF_DIR" "$VCF_DIR" "$SAMPLE_VCF_DIR"
