@@ -1,8 +1,8 @@
 #### This is my repository for keeping track of my bioinformatics workflow for my conseravtion genomics projects.
 
-##### Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random notes and tips/tricks that may help you.
+#### Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random notes and tips/tricks that may help you.
 
-##### Scripts for general bioinformatic workflows are uploaded as follows:
+#### Scripts for general bioinformatic workflows are uploaded as follows:
 
 00_refprep.md](./00_refprep.md) describes how I prepared my reference genomes.
 - [get_masked_regions.py](./get_masked_regions.py) is a custom python script used for extracting coordinate of masked sites in the reference genome.
