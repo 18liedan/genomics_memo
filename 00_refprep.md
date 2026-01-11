@@ -93,8 +93,8 @@ gatk CreateSequenceDictionary -R ge_ref_softmasked_auto.fa -O ge_ref_softmasked_
 ```
 
 ### Mountain Hawk-Eagle
-#### Genome provided by the National Institute of Environmental Studies, Japan
-- It is a scaffold level assembly with unlabelled W & Z chromosomes
+#### Not-yet-published genome
+- It is a scaffold level assembly with unlabelled W & Z scaffolds.
 - As with any other genome, check the md5sum to make sure it is not corrupted.
 - To make it easier to use, I renamed it to mhe_ref.fna
 
