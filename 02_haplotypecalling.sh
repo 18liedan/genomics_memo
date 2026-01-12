@@ -6,7 +6,7 @@ set -euo pipefail
 ###############################################################################
 # RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
-SPECIES_ID="ge"
+SPECIES_ID="yourspecies"
 
 # RESOURCE ALLOCATION (Optimized for NIG supercomputer; 1.5TB RAM / 192 Cores)
 MAX_JOBS=12              # 12 samples in parallel
