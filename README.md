@@ -15,7 +15,7 @@ Scripts for general bioinformatic workflows are as follows:
 
 🔡 [04_finalhaplotypecalling.sh](./04_finalhaplotypecalling.sh) is a script to call, merge, genotype, and filter final variants for downstream analyses.
 
-📏 05_angsdhet.sh is a script to run ANGSD to calculate heterozygosity from sfs files per sample.
+📏 [05_angsdhet.sh](05_angsdhet.sh) is a script to run ANGSD to calculate heterozygosity from sfs files per sample.
 
 📏 06_roh.sh is a script to run PLINK to calculate runs of homozygosity for all samples.
 - [roh_plot.R](./roh_plot.R) is a custom R script used to plot ROH results.
