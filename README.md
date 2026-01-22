@@ -13,7 +13,7 @@ Scripts for general bioinformatic workflows are as follows:
 
 ⚖️ [03_bqsr.sh](./03_bqsr.sh) is a script to perform BQSR on all samples.
 
-🔡 04_finalhaplotypecalling.sh is a script to call, merge, genotype, and filter final variants for downstream analyses.
+🔡 [04_finalhaplotypecalling.sh](./04_finalhaplotypecalling.sh) is a script to call, merge, genotype, and filter final variants for downstream analyses.
 
 📏 05_angsdhet.sh is a script to run ANGSD to calculate heterozygosity from sfs files per sample.
 
