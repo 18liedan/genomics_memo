@@ -2,21 +2,21 @@
 set -euo pipefail
 
 # This script performs Final Haplotype Calling on BQSR-calibrated BAMs and 
-# processes four different sample subsets for downstream analysis.
+# processes different sample subsets for downstream analysis.
 
 ###############################################################################
 # RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
-SPECIES_ID="ge"
+SPECIES_ID="yourspecies"
 
-# RESOURCE ALLOCATION
-MAX_JOBS=12              
-THREADS_PER_JOB=16       
-JAVA_OPTS="-Xmx64g"      
+# RESOURCE ALLOCATION (Optimized for NIG supercomputer; 1.5TB RAM / 192 Cores)
+MAX_JOBS=12              # 12 samples in parallel
+THREADS_PER_JOB=16       # 12 * 16 = 192 cores
+JAVA_OPTS="-Xmx64g"      # 12 * 64GB = 768GB
 COHORT_JAVA_OPTS="-Xmx256g" 
 
 # SUBSET CONFIGURATION
-SUBSETS=("subset1" "subset2" "subset3" "subset4" "subset5" "subset6")
+SUBSETS=("subset1" "subset2" "subset3") # Add as many subsets as you need to analyze. Make sure to include sample list in your ref directory.
 
 # PATHS
 REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
@@ -141,7 +141,7 @@ for SUBSET in "${SUBSETS[@]}"; do
         log "  - Genotyped VCF for $SUBSET already exists. Skipping."
     fi
 
-    # --- 3c. SNP Extraction and Hard Filtering ---
+    # --- 3c. SNP Extraction and Hard Filtering --- # Adjust filtering parameters as you wish.
     SNPS_HARD="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_hardfiltered.snps.vcf.gz"
     if [[ ! -f "$SNPS_HARD" ]]; then
         log "  - SNP Hard-Filtering ($SUBSET)"
@@ -156,7 +156,7 @@ for SUBSET in "${SUBSETS[@]}"; do
         log "  - Hard-filtered SNPs for $SUBSET already exists. Skipping."
     fi
 
-    # --- 3d. Softmasking: Missingness & Repeat Masking ---
+    # --- 3d. Softmasking: Missingness & Repeat Masking --- # Adjust filtering parameters as you wish.
     SNPS_SOFT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered.snps.vcf.gz"
     if [[ ! -f "$SNPS_SOFT" ]]; then
         log "  - First soft-filtering ($SUBSET: Missingness 0.85, MAF 0.05)"
