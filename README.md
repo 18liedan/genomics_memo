@@ -26,7 +26,7 @@ Scripts for general bioinformatic workflows are as follows:
 
 🕰️ 09_psmc.sh is a script to run PSMC on all samples.
 
-🕰️ 10_smcpp.sh is a script to run SMC++ on all samples, with bootstrapping. I run the software through singularity, but docker works too if you have root permission.
+🕰️ [10_smcpp.sh](./10_smpp.sh) is a script to run SMC++ on all samples, with bootstrapping. I run the software through singularity because I don't have admin priviledges in my cluster, but docker works too if you can use sudo and install necessary files (i.e. you have root permission).
 - the following python script was used for bootstrapping: https://github.com/popgenmethods/smcpp/files/1182555/bootstrap_smcpp.zip
 - [smcpp_makecsv.py](./smcpp_makecsv.py) is a custom python script used for exporting results to a csv.
 - [smcpp_plot.R](./smcpp_plot.R) is a custom R script used to plot SMC++ results.
