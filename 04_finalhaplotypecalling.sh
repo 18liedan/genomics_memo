@@ -201,22 +201,38 @@ SUMMARY_OUT="${SPECIES_ID}_stats/${SPECIES_ID}_final_variant_summary.txt"
 {
     echo -e "SUBSET\tSTAGE\tCOUNT"
     for SUBSET in "${SUBSETS[@]}"; do
+        SUBSET_DIR="${VCF_DIR}/${SUBSET}"
         GENO="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_genotyped.vcf.gz"
-		HARD="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_hardfiltered.snps.vcf.gz"
-		SOFT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered.snps.vcf.gz"
-		SOFT_BIALLELIC="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_biallelic.snps.vcf.gz"
-        SOFT_NOREPEAT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat.vcf.gz"
-        COUNT_GENO=$(bcftools view -H "$GENO" | wc -l || echo "0") # Handle case where file might not exist yet
-        COUNT_HARD=$(bcftools view -H "$HARD" | wc -l || echo "0")
-		COUNT_SOFT=$(bcftools view -H "$SOFT" | wc -l || echo "0")
-        COUNT_SOFT_BIALLELIC=$(bcftools view -H "$SOFT_BIALLELIC" | wc -l || echo "0")
-        COUNT_SOFT_NOREPEAT=$(bcftools view -H "$SOFT_NOREPEAT" | wc -l || echo "0")
+        HARD="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_hardfiltered.snps.vcf.gz"
+        SOFT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered.snps.vcf.gz"
+        SOFT_BIALLELIC="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_biallelic.snps.vcf.gz"
+        SOFT_NOREPEAT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat.snps.vcf.gz"
 
+        # Helper function to count variants safely
+        count_vars() {
+            local file=$1
+            if [[ -f "$file" ]]; then
+                # -H ignores the header for faster counting
+                bcftools view -H "$file" 2>/dev/null | wc -l
+            else
+                echo "0"
+            fi
+        }
+
+        log "  - Counting variants for subset: $SUBSET"
+        
+        COUNT_GENO=$(count_vars "$GENO")
+        COUNT_HARD=$(count_vars "$HARD")
+        COUNT_SOFT=$(count_vars "$SOFT")
+        COUNT_SOFT_BIALLELIC=$(count_vars "$SOFT_BIALLELIC")
+        COUNT_SOFT_NOREPEAT=$(count_vars "$SOFT_NOREPEAT")
+
+        # Output to the summary file with correct STAGE labels
         echo -e "${SUBSET}\tRaw_Genotyped\t${COUNT_GENO}"
-        echo -e "${SUBSET}\tRaw_Genotyped\t${COUNT_HARD}"
-        echo -e "${SUBSET}\tRaw_Genotyped\t${COUNT_SOFT}"
-		echo -e "${SUBSET}\tRaw_Genotyped\t${COUNT_SOFT_BIALLELIC}"
-        echo -e "${SUBSET}\tRaw_Genotyped\t${COUNT_SOFT_NOREPEAT}"
+        echo -e "${SUBSET}\tHardFiltered_SNPs\t${COUNT_HARD}"
+        echo -e "${SUBSET}\tSoftFiltered_SNPs\t${COUNT_SOFT}"
+        echo -e "${SUBSET}\tBiallelic_SNPs\t${COUNT_SOFT_BIALLELIC}"
+        echo -e "${SUBSET}\tNoRepeat_SNPs\t${COUNT_SOFT_NOREPEAT}"
     done
 } > "$SUMMARY_OUT"
 
