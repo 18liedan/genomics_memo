@@ -15,18 +15,22 @@ Scripts for general bioinformatic workflows are as follows:
 
 🔡 [04_finalhaplotypecalling.sh](./04_finalhaplotypecalling.sh) is a script to call, merge, genotype, and filter final variants for downstream analyses.
 
-📏 [05_angsdhet.sh](05_angsdhet.sh) is a script to run ANGSD to calculate heterozygosity from sfs files per sample.
+🪢 [05_angsdhet.sh](05_angsdhet.sh) is a script to run ANGSD to calculate heterozygosity from sfs files per sample.
 
-📏 06_roh.sh is a script to run PLINK to calculate runs of homozygosity for all samples.
+🪢 06_angsdstats.sh is a script to run ANGSD to calculate nucleotide diversity, Tajima's D, etc using sfs.
+
+🪢 07_roh.sh is a script to run PLINK to calculate runs of homozygosity for all samples.
 - [roh_plot.R](./roh_plot.R) is a custom R script used to plot ROH results.
 
-📍 07_pca.sh is a script to run PCA on all samples, with options to subsample different datasets.
+📍 08_pca.sh is a script to run PCA on all samples, with options to subsample different datasets.
 
-🗂️ 08_admixture.sh is a script to run ADMIXTURE on all samples, with options to subsample different datasets.
+📍 09_admixture.sh is a script to run ADMIXTURE on all samples, with options to subsample different datasets.
 
-🕰️ 09_psmc.sh is a script to run PSMC on all samples.
+📍 10_angsdfst.sh is a script to run ANGSD to calculate Fst between designated datasets.
 
-🕰️ [10_smcpp.sh](./10_smpp.sh) is a script to run SMC++ on all samples, with bootstrapping. I run the software through singularity because I don't have admin priviledges in my cluster, but docker works too if you can use sudo and install necessary files (i.e. you have root permission).
+🕰️ 11_psmc.sh is a script to run PSMC on all samples.
+
+🕰️ 12_smcpp.sh is a script to run SMC++ on all samples, with bootstrapping. I run the software through singularity because I don't have admin priviledges in my cluster, but docker works too if you can use sudo and install necessary files (i.e. you have root permission).
 - the following python script was used for bootstrapping: https://github.com/popgenmethods/smcpp/files/1182555/bootstrap_smcpp.zip
 - [smcpp_makecsv.py](./smcpp_makecsv.py) is a custom python script used for exporting results to a csv.
 - [smcpp_plot.R](./smcpp_plot.R) is a custom R script used to plot SMC++ results.
