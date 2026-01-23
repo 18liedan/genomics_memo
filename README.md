@@ -2,7 +2,7 @@
 
 Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various notes and basic tips/tricks for beginners like myself.
 
-Scripts for general bioinformatic workflows are as follows (WIP!!).
+I have uploaded scripts for general bioinformatic workflows (they use loops so you can process multiple samples and populations at once).
 Please note not all scripts are ready yet, and the uploaded ones may be updated/refined occasionally too.
 
 📖 [00_refprep.md](./00_refprep.md) describes how I prepared my reference genomes.
