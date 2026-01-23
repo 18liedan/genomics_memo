@@ -1,6 +1,6 @@
 #### 🧬 This is my repository for keeping track of my bioinformatics workflows. 🧬
 
-Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various random notes and tips/tricks that may help you.
+Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various notes and basic tips/tricks for beginners like myself.
 
 Scripts for general bioinformatic workflows are as follows:
 
