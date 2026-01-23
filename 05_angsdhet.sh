@@ -89,6 +89,7 @@ run_angsd_het() {
     # 2. RUN ANGSD SAF
     if [[ ! -f "${OUTPUT_PREFIX}.saf.idx" ]]; then
         # Note: calling 'angsd' directly as it is usually in the path
+        # Adjust filtering parameters as you wish.
         "${ANGSD_PATH}" \
             -i "$INPUT_BAM" \
             -ref "$REF_GENOME" \
