@@ -8,6 +8,10 @@ set -euo pipefail
 # RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
 SPECIES_ID="yourspecies"
+SUBSETS=("subset1" "subset2" "subset3") 
+# Each subset file contains names of individuals per subpopulation.
+# Add as many subpopulations as you need to analyze.
+# Make sure to include sample list in your ref directory.
 
 # RESOURCE ALLOCATION (Optimized for NIG supercomputer; 1.5TB RAM / 192 Cores)
 MAX_JOBS=12              # 12 samples in parallel
@@ -15,12 +19,8 @@ THREADS_PER_JOB=16       # 12 * 16 = 192 cores
 JAVA_OPTS="-Xmx64g"      # 12 * 64GB = 768GB
 COHORT_JAVA_OPTS="-Xmx256g" 
 
-# SUBSET CONFIGURATION
-SUBSETS=("subset1" "subset2" "subset3") # Add as many subsets as you need to analyze. Make sure to include sample list in your ref directory.
-
 # PATHS
 REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
-# Corresponds to BQSR script's sample list
 SAMPLE_LIST_FULL="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt" 
 MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed"
 COVERAGE_STATS="${SPECIES_ID}_stats/${SPECIES_ID}_coverage_summary.tsv"
