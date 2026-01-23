@@ -27,7 +27,7 @@ Please note not all scripts are ready yet, and the uploaded ones may be updated/
 
 📍 09_admixture.sh is a script to run ADMIXTURE on all samples, with options to subsample different datasets.
 
-📍 10_angsdfst.sh is a script to run ANGSD to calculate Fst between designated datasets.
+📍 [10_angsdfst.sh](10_angsdfst.sh) is a script to run ANGSD to calculate Fst between designated datasets.
 
 🕰️ 11_psmc.sh is a script to run PSMC on all samples.
 
