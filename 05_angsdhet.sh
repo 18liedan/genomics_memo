@@ -3,9 +3,9 @@ set -euo pipefail
 
 # This script performs heterozygosity calculations in ANGSD using each sample's BQSR-calibrated BAM file.
 
-# -------------------------------------------------------------------------
-# SCRIPT CONFIGURATION
-# -------------------------------------------------------------------------
+###############################################################################
+# RESOURCE ALLOCATION & CONFIGURATION
+###############################################################################
 SPECIES_ID="ge"
 
 # PATHS TO EXECUTABLES
@@ -32,9 +32,9 @@ log() { printf '[%s] %s\n' "$(date +'%F %T')" "$*" >&2; }
 # Export variables for GNU Parallel
 export ANGSD_PATH THREADS_PER_JOB REF_GENOME INPUT_BAM_DIR OUTPUT_SFS_DIR SPECIES_ID
 
-# -------------------------------------------------------------------------
+###############################################################################
 # VALIDATION
-# -------------------------------------------------------------------------
+###############################################################################
 if [ ! -f "$REF_GENOME" ]; then
     log "ERROR: Reference genome not found at '$REF_GENOME'"
     exit 1
@@ -55,9 +55,9 @@ if ! command -v samtools &> /dev/null; then
     exit 1
 fi
 
-# -------------------------------------------------------------------------
+###############################################################################
 # STEP 1: CALCULATE SAF AND SFS (Per Sample Function)
-# -------------------------------------------------------------------------
+###############################################################################
 run_angsd_het() {
     local sample="$1"
     local INPUT_BAM="${INPUT_BAM_DIR}/${sample}_bqsr.bam"
@@ -129,9 +129,9 @@ export -f run_angsd_het
 log "Step 1: Running Parallel ANGSD Heterozygosity Calculation..."
 tr -d '\r' < "$SAMPLE_LIST" | parallel --jobs "$MAX_JOBS" --progress run_angsd_het {}
 
-# -------------------------------------------------------------------------
+###############################################################################
 # STEP 2: SUMMARIZE RESULTS
-# -------------------------------------------------------------------------
+###############################################################################
 log "Step 2: Consolidating heterozygosity results..."
 
 OUTPUT_SUMMARY_FILE="${OUTPUT_SFS_DIR}/${SPECIES_ID}_angsdhet_summary.txt"
