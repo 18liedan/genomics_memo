@@ -4,7 +4,7 @@ set -euo pipefail
 # -------------------------------------------------------------------------
 # SCRIPT CONFIGURATION
 # -------------------------------------------------------------------------
-SPECIES_ID="yourspecies"
+SPECIES_ID="ge"
 
 # PATHS TO EXECUTABLES
 ANGSD_PATH="angsd" # Directory containing 'misc/realSFS'
@@ -62,11 +62,6 @@ run_angsd_het() {
     local OUTPUT_PREFIX="${OUTPUT_SFS_DIR}/${sample}"
     local SFS_FILE="${OUTPUT_PREFIX}.sfs"
     local COV_FILE="${OUTPUT_SFS_DIR}/${sample}.samtools_cov.txt"
-
-    if [[ -f "$SFS_FILE" ]]; then
-        echo ">> Skipping $sample: Final SFS file already exists."
-        return 0
-    fi
 
     # 1. CALCULATE MEAN DEPTH USING SAMTOOLS
     # Check if we already have the coverage file to save time
