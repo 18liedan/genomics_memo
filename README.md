@@ -2,7 +2,8 @@
 
 Please see the [Wiki page](https://github.com/18liedan/genomics_memo/wiki) for various notes and basic tips/tricks for beginners like myself.
 
-Scripts for general bioinformatic workflows are as follows:
+Scripts for general bioinformatic workflows are as follows (WIP!!).
+Please note not all scripts are ready yet, and the uploaded ones may be updated/refined occasionally too.
 
 📖 [00_refprep.md](./00_refprep.md) describes how I prepared my reference genomes.
 - [get_masked_regions.py](./get_masked_regions.py) is a custom python script used for extracting coordinates of masked sites in the reference genome. This should be placed in the same directory as your reference genome.
@@ -35,4 +36,4 @@ Scripts for general bioinformatic workflows are as follows:
 - [smcpp_makecsv.py](./smcpp_makecsv.py) is a custom python script used for exporting results to a csv.
 - [smcpp_plot.R](./smcpp_plot.R) is a custom R script used to plot SMC++ results.
 
-For most of my processes, I use a species prefix that can be changed at the top of each script, so it should be fairly easy to implement the pipelines as long as you adhere to the naming system. Please feel free to download and adjust the scripts for your own study systems! 🦅
+For most of my processes, I use a species prefix that can be changed at the top of each script, so it should be fairly easy to implement the pipelines as long as you adhere to the naming system. Please feel free to download and adjust the scripts for your own study systems! 🦅 Let me know if you come across any issues.
