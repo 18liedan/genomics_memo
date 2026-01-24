@@ -21,7 +21,7 @@ THREADS_PER_JOB=8
 
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
-OUTPUT_SFS_DIR="${SPECIES_ID}_sfspop"
+OUTPUT_SFS_DIR="${SPECIES_ID}_sfspop_folded"
 
 mkdir -p "$OUTPUT_SFS_DIR"
 
@@ -34,7 +34,7 @@ export ANGSD_PATH REALSFS_PATH THREADS_PER_JOB REF_GENOME OUTPUT_SFS_DIR SPECIES
 run_angsd_saf() {
     local SUBSET=$1
     local FILELIST="${SPECIES_ID}_bqsr/${SPECIES_ID}_${SUBSET}.filelist"
-    local OUT_PREFIX="$OUTPUT_SFS_DIR/$SUBSET"
+    local OUT_PREFIX="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET"
     
     # 1. SAF Generation
     if [[ ! -f "${OUT_PREFIX}.saf.idx" ]]; then
@@ -42,7 +42,7 @@ run_angsd_saf() {
         # Ensure unix format
         dos2unix "$FILELIST" 2>/dev/null
 
-        $ANGSD_PATH \
+        $ANGSD_PATH \ # modify parameters as you wish
             -b "$FILELIST" \
             -ref "$REF_GENOME" \
             -anc "$REF_GENOME" \
@@ -51,11 +51,11 @@ run_angsd_saf() {
             -doSaf 1 \
 			-GL 2 \
 			-minMapQ 20 \
-			-minQ 20 \
+			-minQ 30 \
 			-remove_bads 1 \
 			-uniqueOnly 1  \
 			-only_proper_pairs 1  \
-			-baq 0  \
+			-baq 1  \
 			-C 50
     else
         echo "-> SAF index already exists for $SUBSET. Skipping."
@@ -67,6 +67,7 @@ run_angsd_saf() {
         $REALSFS_PATH  \
 			"${OUT_PREFIX}.saf.idx"  \
 			-P "$THREADS_PER_JOB"  \
+			-fold 1 \
 			> "${OUT_PREFIX}.sfs"
     else
         echo "-> SFS index already exists for $SUBSET. Skipping."
@@ -85,9 +86,9 @@ run_angsd_fst() {
     local SUBSET1=$1
     local SUBSET2=$2
     local PAIR="${SUBSET1}-${SUBSET2}"
-    local OUT_P1="$OUTPUT_SFS_DIR/$SUBSET1"
-    local OUT_P2="$OUTPUT_SFS_DIR/$SUBSET2"
-    local OUT_PAIR="$OUTPUT_SFS_DIR/$PAIR"
+    local OUT_P1="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET1"
+    local OUT_P2="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET2"
+    local OUT_PAIR="$OUTPUT_SFS_DIR/${SPECIES_ID}_$PAIR"
 
     if [[ ! -f "${OUT_PAIR}.fst_stats.txt" ]]; then
         echo "Calculating Fst for pair: $SUBSET1 vs $SUBSET2"
