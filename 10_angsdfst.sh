@@ -1,15 +1,19 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-# This script performs heterozygosity calculations in ANGSD using each sample's BQSR-calibrated BAM file.
+# This script performs Fst calculations in ANGSD using designated populations (subsets).
 
 # -------------------------------------------------------------------------
 # SCRIPT CONFIGURATION
 # -------------------------------------------------------------------------
-SPECIES_ID="yourspecies"
+SPECIES_ID="mhe"
+SUBSETS=("subset1" "subset2")
+# Add as many subpopulations as you need to analyze.
+# Make sure to include .filelists in your species' bqsr directory.
+# Each file list should contain paths of post-bqsr bam files of the samples you want to analyze in each subset.
 
 # PATHS TO EXECUTABLES
-ANGSD_PATH="angsd" # Directory containing 'misc/realSFS'
+ANGSD_PATH="angsd" # Path to the angsd binary
+REALSFS_PATH="angsd/misc/realSFS" # Path to realSFS
 
 # RESOURCE ALLOCATION
 MAX_JOBS=12              
@@ -17,162 +21,102 @@ THREADS_PER_JOB=8
 
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
-SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt"
+OUTPUT_SFS_DIR="${SPECIES_ID}_sfspop_folded"
 
-INPUT_BAM_DIR="${SPECIES_ID}_bqsr"
-OUTPUT_SFS_DIR="${SPECIES_ID}_sfs_folded"
-
-# Create output directory
 mkdir -p "$OUTPUT_SFS_DIR"
 
-# Print date on terminal log outputs
-log() { printf '[%s] %s\n' "$(date +'%F %T')" "$*" >&2; }
+# Export variables for GNU Parallel subshells
+export ANGSD_PATH REALSFS_PATH THREADS_PER_JOB REF_GENOME OUTPUT_SFS_DIR SPECIES_ID
 
-# Export variables for GNU Parallel
-export ANGSD_PATH THREADS_PER_JOB REF_GENOME INPUT_BAM_DIR OUTPUT_SFS_DIR SPECIES_ID
-
-# -------------------------------------------------------------------------
-# VALIDATION
-# -------------------------------------------------------------------------
-if [ ! -f "$REF_GENOME" ]; then
-    log "ERROR: Reference genome not found at '$REF_GENOME'"
-    exit 1
-fi
-
-if [ ! -f "$SAMPLE_LIST" ]; then
-    log "ERROR: Sample list not found at '$SAMPLE_LIST'"
-    exit 1
-fi
-
-if [ ! -x "$ANGSD_PATH/misc/realSFS" ]; then
-    log "ERROR: ANGSD executable not found at '$ANGSD_PATH'"
-    exit 1
-fi
-
-if ! command -v samtools &> /dev/null; then
-    log "ERROR: samtools could not be found. Please load the module or add to PATH."
-    exit 1
-fi
-
-# -------------------------------------------------------------------------
-# STEP 1: CALCULATE SAF AND SFS (Per Sample Function)
-# -------------------------------------------------------------------------
-run_angsd_het() {
-    local sample="$1"
-    local INPUT_BAM="${INPUT_BAM_DIR}/${sample}_bqsr.bam"
-    local OUTPUT_PREFIX="${OUTPUT_SFS_DIR}/${sample}"
-    local SFS_FILE="${OUTPUT_PREFIX}.sfs"
-    local COV_FILE="${OUTPUT_SFS_DIR}/${sample}.samtools_cov.txt"
-
-    # 1. CALCULATE MEAN DEPTH USING SAMTOOLS
-    # Check if we already have the coverage file to save time
-    if [[ ! -f "$COV_FILE" ]]; then
-        echo "Calculating coverage for $sample using samtools..."
-        samtools coverage "$INPUT_BAM" > "$COV_FILE"
-    else
-        echo "-> Coverage file exists for $sample. Reading depth..."
-    fi
-
-    # Parse Mean Depth:
-    # samtools coverage outputs a row per scaffold. 
-    # We calculate the weighted average depth across all scaffolds.
-    local MEAN_DEPTH=$(awk 'NR>1 {sum+=$7*($3-$2); len+=$3-$2} END {if(len>0) print sum/len; else print 0}' "$COV_FILE")
+# ------------------------------------------------------------------
+# STEP 1: SAF Function
+# ------------------------------------------------------------------
+run_angsd_saf() {
+    local SUBSET=$1
+    local FILELIST="${SPECIES_ID}_bqsr/${SPECIES_ID}_${SUBSET}.filelist"
+    local OUT_PREFIX="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET"
     
-    # Calculate thresholds using bc (1/3 and 2x)
-    # printf "%.0f" rounds the float to the nearest integer for ANGSD
-    local MIN_DP=$(printf "%.0f" $(echo "$MEAN_DEPTH / 3" | bc -l))
-    local MAX_DP=$(printf "%.0f" $(echo "$MEAN_DEPTH * 2" | bc -l))
+    # 1. SAF Generation
+    if [[ ! -f "${OUT_PREFIX}.saf.idx" ]]; then
+        echo "Processing SAF for $SUBSET..."
+        # Ensure unix format
+        dos2unix "$FILELIST" 2>/dev/null
 
-    echo "Sample: $sample | Mean Depth: $MEAN_DEPTH | MinDP: $MIN_DP | MaxDP: $MAX_DP"
-
-    # 2. RUN ANGSD SAF
-    if [[ ! -f "${OUTPUT_PREFIX}.saf.idx" ]]; then
-        # Note: calling 'angsd' directly as it is usually in the path
-        "${ANGSD_PATH}" \ # modify parameters as you wish
-            -i "$INPUT_BAM" \
+        $ANGSD_PATH \ # modify parameters as you wish
+            -b "$FILELIST" \
             -ref "$REF_GENOME" \
             -anc "$REF_GENOME" \
-            -out "$OUTPUT_PREFIX" \
+            -out "$OUT_PREFIX" \
             -nThreads "$THREADS_PER_JOB" \
             -doSaf 1 \
-            -GL 2 \
-            -doCounts 1 \
-            -minMapQ 20 \
-            -minQ 30 \
-            -remove_bads 1 \
-            -uniqueOnly 1 \
-            -only_proper_pairs 1 \
-            -baq 1 \
-            -C 50 \
-            -setMinDepth "$MIN_DP" \
-            -setMaxDepth "$MAX_DP"
+			-GL 2 \
+			-minMapQ 20 \
+			-minQ 30 \
+			-remove_bads 1 \
+			-uniqueOnly 1  \
+			-only_proper_pairs 1  \
+			-baq 1  \
+			-C 50
     else
-        echo "-> SAF index already exists for $sample. Skipping to realSFS."
+        echo "-> SAF index already exists for $SUBSET. Skipping."
     fi
 
-    # 3. RUN REALSFS
-    if [[ ! -f "$SFS_FILE" ]]; then
-        "$ANGSD_PATH/misc/realSFS" \
-            "$OUTPUT_PREFIX.saf.idx" \
-            -P "$THREADS_PER_JOB" \
+    # 2. 1D SFS Generation
+    if [[ ! -f "${OUT_PREFIX}.sfs" ]]; then
+        echo "Processing 1D SFS for $SUBSET..."
+        $REALSFS_PATH  \
+			"${OUT_PREFIX}.saf.idx"  \
+			-P "$THREADS_PER_JOB"  \
 			-fold 1 \
-            > "$SFS_FILE"
+			> "${OUT_PREFIX}.sfs"
     else
-        echo "-> SFS file already exists for $sample."
-    fi
-
-    echo "Finished $sample."
+        echo "-> SFS index already exists for $SUBSET. Skipping."
+	fi
 }
-export -f run_angsd_het
+export -f run_angsd_saf
 
-log "Step 1: Running Parallel ANGSD Heterozygosity Calculation..."
-tr -d '\r' < "$SAMPLE_LIST" | parallel --jobs "$MAX_JOBS" --progress run_angsd_het {}
+echo "--- Step 1: Running SAF calculations in Parallel ---"
+# Passing the array elements directly to parallel
+parallel --jobs "$MAX_JOBS" run_angsd_saf ::: "${SUBSETS[@]}"
 
-# -------------------------------------------------------------------------
-# STEP 2: SUMMARIZE RESULTS
-# -------------------------------------------------------------------------
-log "Step 2: Consolidating heterozygosity results..."
+# ------------------------------------------------------------------
+# STEP 2: Fst Function (Processes ONE PAIR at a time)
+# ------------------------------------------------------------------
+run_angsd_fst() {
+    local SUBSET1=$1
+    local SUBSET2=$2
+    local PAIR="${SUBSET1}-${SUBSET2}"
+    local OUT_P1="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET1"
+    local OUT_P2="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET2"
+    local OUT_PAIR="$OUTPUT_SFS_DIR/${SPECIES_ID}_$PAIR"
 
-OUTPUT_SUMMARY_FILE="${OUTPUT_SFS_DIR}/${SPECIES_ID}_angsdhet_summary.txt"
+    if [[ ! -f "${OUT_PAIR}.fst_stats.txt" ]]; then
+        echo "Calculating Fst for pair: $SUBSET1 vs $SUBSET2"
 
-# Header
-echo -e "SampleID\tHomRef\tHeterozygous\tHomAlt\tTotalSites\tHeterozygosity" > "$OUTPUT_SUMMARY_FILE"
+        # 1. Calculate 2D SFS (joint SFS)
+        $REALSFS_PATH "${OUT_P1}.saf.idx" "${OUT_P2}.saf.idx" -P "$THREADS_PER_JOB" > "${OUT_PAIR}.ml"
 
-# Iterate through sample list to maintain order, rather than globbing
-while read -r sample; do
-    # Remove carriage returns if present
-    sample=$(echo "$sample" | tr -d '\r')
-    sfs_file="${OUTPUT_SFS_DIR}/${sample}.sfs"
+        # 2. Index the Fst
+        $REALSFS_PATH fst index "${OUT_P1}.saf.idx" "${OUT_P2}.saf.idx" \
+            -sfs "${OUT_PAIR}.ml" -fstout "$OUT_PAIR" -P "$THREADS_PER_JOB"
 
-    if [ -f "$sfs_file" ]; then
-        # Read SFS values into array
-        sfs_values=($(cat "$sfs_file"))
-
-        # realSFS output for diploid: [0]=AA (HomRef), [1]=Aa (Het), [2]=aa (HomAlt)
-        hom_ref=${sfs_values[0]:-0}
-        het_sites=${sfs_values[1]:-0}
-        hom_alt=${sfs_values[2]:-0}
-
-        # Calculate using awk
-        summary=$(awk -v h_ref="$hom_ref" -v het="$het_sites" -v h_alt="$hom_alt" '
-            BEGIN {
-                total = h_ref + het + h_alt;
-                if (total > 0) {
-                    het_rate = het / total;
-                } else {
-                    het_rate = 0;
-                }
-                # Output format: HomRef Het HomAlt Total HetRate
-                printf "%.0f\t%.0f\t%.0f\t%.0f\t%0.8f", h_ref, het, h_alt, total, het_rate;
-            }
-        ')
-        
-        echo -e "${sample}\t${summary}" >> "$OUTPUT_SUMMARY_FILE"
+        # 3. Get the global Fst stats
+        $REALSFS_PATH fst stats "${OUT_PAIR}.fst.idx" -P "$THREADS_PER_JOB" > "${OUT_PAIR}.fst_stats.txt"
     else
-        echo "WARNING: No SFS file found for $sample during summary generation." >&2
+        echo "-> Fst results already exist for $PAIR. Skipping."
     fi
+}
+export -f run_angsd_fst
 
-done < "$SAMPLE_LIST"
+echo "--- Step 2: Running Pairwise Fst in Parallel ---"
 
-log "Done. Summary saved to: $OUTPUT_SUMMARY_FILE"
-cat "$OUTPUT_SUMMARY_FILE"
+# Generate the unique pairs list and pipe into parallel
+# This replaces the nested loop logic and ensures no duplicates (i < j)
+LEN=${#SUBSETS[@]}
+for (( i=0; i<LEN; i++ )); do
+    for (( j=i+1; j<LEN; j++ )); do
+        echo "${SUBSETS[i]} ${SUBSETS[j]}"
+    done
+done | parallel --colsep ' ' --jobs "$MAX_JOBS" run_angsd_fst {1} {2}
+
+echo "All Fst calculations finished."
