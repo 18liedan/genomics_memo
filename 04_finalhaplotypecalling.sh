@@ -24,6 +24,7 @@ REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
 SAMPLE_LIST_FULL="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt" 
 MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed"
 COVERAGE_STATS="${SPECIES_ID}_stats/${SPECIES_ID}_coverage_summary.tsv"
+	# this is produced at the end of "01_trimming-mapping.sh"
 
 # Input BAMs are the output of BQSR script
 BAM_DIR="${SPECIES_ID}_bqsr" 
