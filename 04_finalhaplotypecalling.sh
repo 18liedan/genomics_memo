@@ -160,7 +160,7 @@ for SUBSET in "${SUBSETS[@]}"; do
     # --- 3d. Softmasking: Missingness & Repeat Masking --- # Adjust filtering parameters as you wish.
     SNPS_SOFT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered.snps.vcf.gz"
     if [[ ! -f "$SNPS_SOFT" ]]; then
-        log "  - First soft-filtering ($SUBSET: Missingness 0.85, MAF 0.05)"
+        log "  - First soft-filtering ($SUBSET: Missingness 0.8, MAF 0.05)"
 		vcftools --gzvcf "$SNPS_HARD" --max-missing 0.8 --maf 0.05 --recode --stdout | \
 			bgzip -c > "$SNPS_SOFT"
         gatk IndexFeatureFile -I "$SNPS_SOFT"
@@ -170,7 +170,7 @@ for SUBSET in "${SUBSETS[@]}"; do
 
 	SNPS_BIALLELIC="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_biallelic.snps.vcf.gz"
     if [[ ! -f "$SNPS_BIALLELIC" ]]; then
-        log "  - Second soft-filtering ($SUBSET: Missingness 0.85, MAF 0.05, biallelic only)"
+        log "  - Second soft-filtering ($SUBSET: Missingness 0.8, MAF 0.05, biallelic only)"
 		vcftools --gzvcf "$SNPS_SOFT" --max-alleles 2 --min-alleles 2 --recode --stdout | \
 			bgzip -c > "$SNPS_BIALLELIC"
         gatk IndexFeatureFile -I "$SNPS_BIALLELIC"
