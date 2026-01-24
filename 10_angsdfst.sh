@@ -6,7 +6,7 @@ set -euo pipefail
 # -------------------------------------------------------------------------
 # SCRIPT CONFIGURATION
 # -------------------------------------------------------------------------
-SPECIES_ID="ge"
+SPECIES_ID="yourspecies"
 
 # PATHS TO EXECUTABLES
 ANGSD_PATH="angsd" # Directory containing 'misc/realSFS'
