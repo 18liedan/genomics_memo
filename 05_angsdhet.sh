@@ -85,9 +85,9 @@ run_angsd_het() {
 
     echo "Sample: $sample | Mean Depth: $MEAN_DEPTH | MinDP: $MIN_DP | MaxDP: $MAX_DP"
 
-    # 2. RUN ANGSD SAF
+    # 2. RUN ANGSD SAF (modify parameters as you wish)
     if [[ ! -f "${OUTPUT_PREFIX}.saf.idx" ]]; then
-        "${ANGSD_PATH}" \ # modify parameters as you wish
+        "${ANGSD_PATH}" \
             -i "$INPUT_BAM" \
             -ref "$REF_GENOME" \
             -anc "$REF_GENOME" \
@@ -100,9 +100,8 @@ run_angsd_het() {
             -minQ 30 \
             -remove_bads 1 \
             -uniqueOnly 1 \
-            -only_proper_pairs 1 \
             -baq 1 \
-            -C 50 \
+			-C 50 \
             -setMinDepth "$MIN_DP" \
             -setMaxDepth "$MAX_DP"
     else
