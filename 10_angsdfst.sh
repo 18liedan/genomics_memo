@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------------
 # SCRIPT CONFIGURATION
 # -------------------------------------------------------------------------
-SPECIES_ID="yourspecies"
+SPECIES_ID="mhe"
 SUBSETS=("subset1" "subset2")
 # Add as many subpopulations as you need to analyze.
 # Make sure to include .filelists in your species' vcf_bqsr directory.
@@ -22,6 +22,7 @@ THREADS_PER_JOB=8
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
 OUTPUT_SFS_DIR="${SPECIES_ID}_sfspop_folded"
+NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.regions"
 
 mkdir -p "$OUTPUT_SFS_DIR"
 
@@ -35,7 +36,8 @@ run_angsd_saf() {
     local SUBSET=$1
     local FILELIST="${SPECIES_ID}_bqsr/${SPECIES_ID}_${SUBSET}.filelist"
     local OUT_PREFIX="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET"
-    
+	local INCLUDE_REGIONS="${NONMASKED_REGIONS}"
+
     # 1. SAF Generation (modify parameters as you wish)
     if [[ ! -f "${OUT_PREFIX}.saf.idx" ]]; then
         echo "Processing SAF for $SUBSET..."
@@ -50,12 +52,10 @@ run_angsd_saf() {
             -nThreads "$THREADS_PER_JOB" \
             -doSaf 1 \
 			-GL 2 \
-			-minMapQ 20 \
-			-minQ 30 \
-			-remove_bads 1 \
-			-uniqueOnly 1 \
+			-minMapQ 30 \
+			-minQ 20 \
 			-baq 1 \
-			-C 50
+			-rf "$INCLUDE_REGIONS"
     else
         echo "-> SAF index already exists for $SUBSET. Skipping."
     fi
