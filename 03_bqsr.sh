@@ -20,7 +20,7 @@ BAM_DIR="${SPECIES_ID}_mapped"
 VCF_DIR="${SPECIES_ID}_vcf"
 BQSR_DIR="${SPECIES_ID}_bqsr"
 
-# Known sites from previous script
+# Known sites from previous script (SNPs should be repeat masked)
 KNOWN_SNPS="${VCF_DIR}/${SPECIES_ID}_norepeat_filtered.snps.vcf.gz"
 KNOWN_INDELS="${VCF_DIR}/${SPECIES_ID}_hardfilteredpass.indels.vcf.gz"
 
