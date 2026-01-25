@@ -29,7 +29,7 @@ mkdir -p "$OUTPUT_SFS_DIR"
 log() { printf '[%s] %s\n' "$(date +'%F %T')" "$*" >&2; }
 
 # Export variables for GNU Parallel
-export ANGSD_PATH THREADS_PER_JOB REF_GENOME INPUT_BAM_DIR OUTPUT_SFS_DIR SPECIES_ID
+export ANGSD_PATH THREADS_PER_JOB REF_GENOME INPUT_BAM_DIR OUTPUT_SFS_DIR NONMASKED_REGIONS SPECIES_ID
 
 # -------------------------------------------------------------------------
 # VALIDATION
@@ -41,6 +41,11 @@ fi
 
 if [ ! -f "$SAMPLE_LIST" ]; then
     log "ERROR: Sample list not found at '$SAMPLE_LIST'"
+    exit 1
+fi
+
+if [ ! -f "$NONMASKED_REGIONS" ]; then
+    log "ERROR: Regions file not found at '$NONMASKED_REGIONS'"
     exit 1
 fi
 
@@ -111,7 +116,7 @@ run_angsd_het() {
     fi
 
     # 3. RUN REALSFS
-    if [[ ! -f "$SFS_FILE" ]]; then
+    if [[ ! -f "$EST_FILE" ]]; then
         "$ANGSD_PATH/misc/realSFS" \
             "$OUTPUT_PREFIX.saf.idx" \
             -P "$THREADS_PER_JOB" \
