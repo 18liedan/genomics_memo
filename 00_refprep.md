@@ -85,6 +85,19 @@ seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
 #### Extract soft-masked sites using a [python script](./get_masked_regions.py) for downstream analyses where you want to remove repeated sites
 `python3 get_masked_regions.py ge_ref_softmasked_auto.fa > ge_ref_masked_regions.bed`
 
+#### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
+```
+samtools faidx ge_ref_softmasked_auto.fa
+cut -f1,2 ge_ref_softmasked_auto.fa.fai > genome.sizes
+bedtools sort -g genome.sizes -i ge_ref_masked_regions.bed > ge_masked.sorted.bed
+bedtools merge -i ge_masked.sorted.bed > ge_masked.merged.bed
+bedtools complement -i ge_masked.merged.bed -g genome.sizes > ge_nonmasked_sites.bed
+awk '{print $1":"$2+1"-"$3}' ge_nonmasked_sites.bed > ge_nonmasked_sites.regions
+
+# check if it is ok (should not print anything if all is ok)
+comm -3 <(cut -f1 genome.sizes | sort -u) <(cut -f1 ge_masked.merged.bed | sort -u) | head
+awk 'NR==FNR{len[$1]=$2;next} ($3>len[$1]){print "BAD", $0, "len="len[$1]}' genome.sizes ge_masked.merged.bed | head
+```
 #### Index final reference genome
 ```
 bwa-mem2 index ge_ref_softmasked_auto.fa
@@ -138,7 +151,25 @@ seqkit grep -v -p "Scaffold42" mhe_ref_softmasked_autotemp.fa >  mhe_ref_softmas
 rm  mhe_ref_softmasked_autotemp.fa #remove temporary file
 seqkit seq -n gfb_ref_softmasked_auto.fa  #check if it is really removed
 ```
+#### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
+```
+samtools faidx mhe_ref_softmasked_auto.fa
+cut -f1,2 mhe_ref_softmasked_auto.fa.fai > genome.sizes
+bedtools sort -g genome.sizes -i mhe_ref_masked_regions.bed > mhe_masked.sorted.bed
+bedtools merge -i mhe_masked.sorted.bed > mhe_masked.merged.bed
+bedtools complement -i mhe_masked.merged.bed -g genome.sizes > mhe_nonmasked_sites.bed
+awk '{print $1":"$2+1"-"$3}' mhe_nonmasked_sites.bed > mhe_nonmasked_sites.regions
 
+# check if it is ok (should not print anything if all is ok)
+comm -3 <(cut -f1 genome.sizes | sort -u) <(cut -f1 mhe_masked.merged.bed | sort -u) | head
+awk 'NR==FNR{len[$1]=$2;next} ($3>len[$1]){print "BAD", $0, "len="len[$1]}' genome.sizes mhe_masked.merged.bed | head
+```
+#### Index final reference genome
+```
+bwa-mem2 index ge_ref_softmasked_auto.fa
+samtools faidx ge_ref_softmasked_auto.fa
+gatk CreateSequenceDictionary -R ge_ref_softmasked_auto.fa -O ge_ref_softmasked_auto.dict
+```
 #### Index final reference genome
 ```
 bwa-mem2 index mhe_ref_softmasked_auto.fa
