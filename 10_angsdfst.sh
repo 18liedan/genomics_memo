@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------------
 # SCRIPT CONFIGURATION
 # -------------------------------------------------------------------------
-SPECIES_ID="mhe"
+SPECIES_ID="yourspecies"
 SUBSETS=("subset1" "subset2")
 # Add as many subpopulations as you need to analyze.
 # Make sure to include .filelists in your species' vcf_bqsr directory.
