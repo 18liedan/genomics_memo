@@ -18,9 +18,9 @@ THREADS_PER_JOB=8
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
 SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt"
-
+NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.regions"
 INPUT_BAM_DIR="${SPECIES_ID}_bqsr"
-OUTPUT_SFS_DIR="${SPECIES_ID}_sfs_folded"
+OUTPUT_SFS_DIR="${SPECIES_ID}_sfs"
 
 # Create output directory
 mkdir -p "$OUTPUT_SFS_DIR"
@@ -61,7 +61,8 @@ run_angsd_het() {
     local sample="$1"
     local INPUT_BAM="${INPUT_BAM_DIR}/${sample}_bqsr.bam"
     local OUTPUT_PREFIX="${OUTPUT_SFS_DIR}/${sample}"
-    local SFS_FILE="${OUTPUT_PREFIX}.sfs"
+	local INCLUDE_REGIONS="${NONMASKED_REGIONS}"
+    local EST_FILE="${OUTPUT_PREFIX}.est.ml"
     local COV_FILE="${OUTPUT_SFS_DIR}/${sample}.samtools_cov.txt"
 
     # 1. CALCULATE MEAN DEPTH USING SAMTOOLS
@@ -96,14 +97,15 @@ run_angsd_het() {
             -doSaf 1 \
             -GL 2 \
             -doCounts 1 \
-            -minMapQ 20 \
-            -minQ 30 \
+            -minMapQ 30 \
+            -minQ 20 \
+			-C 50 \
             -remove_bads 1 \
             -uniqueOnly 1 \
             -baq 1 \
-			-C 50 \
             -setMinDepth "$MIN_DP" \
-            -setMaxDepth "$MAX_DP"
+            -setMaxDepth "$MAX_DP" \
+			-rf "$INCLUDE_REGIONS"
     else
         echo "-> SAF index already exists for $sample. Skipping to realSFS."
     fi
@@ -114,9 +116,9 @@ run_angsd_het() {
             "$OUTPUT_PREFIX.saf.idx" \
             -P "$THREADS_PER_JOB" \
 			-fold 1 \
-            > "$SFS_FILE"
+            > "$EST_FILE"
     else
-        echo "-> SFS file already exists for $sample."
+        echo "-> .est.ml file already exists for $sample."
     fi
 
     echo "Finished $sample."
@@ -140,16 +142,16 @@ echo -e "SampleID\tHomRef\tHeterozygous\tHomAlt\tTotalSites\tHeterozygosity" > "
 while read -r sample; do
     # Remove carriage returns if present
     sample=$(echo "$sample" | tr -d '\r')
-    sfs_file="${OUTPUT_SFS_DIR}/${sample}.sfs"
+    est_file="${OUTPUT_SFS_DIR}/${sample}.est.ml"
 
-    if [ -f "$sfs_file" ]; then
+    if [ -f "$est_file" ]; then
         # Read SFS values into array
-        sfs_values=($(cat "$sfs_file"))
+        est_values=($(cat "$est_file"))
 
         # realSFS output for diploid: [0]=AA (HomRef), [1]=Aa (Het), [2]=aa (HomAlt)
-        hom_ref=${sfs_values[0]:-0}
-        het_sites=${sfs_values[1]:-0}
-        hom_alt=${sfs_values[2]:-0}
+        hom_ref=${est_values[0]:-0}
+        het_sites=${est_values[1]:-0}
+        hom_alt=${est_values[2]:-0}
 
         # Calculate using awk
         summary=$(awk -v h_ref="$hom_ref" -v het="$het_sites" -v h_alt="$hom_alt" '
