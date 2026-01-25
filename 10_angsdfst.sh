@@ -8,7 +8,7 @@
 SPECIES_ID="yourspecies"
 SUBSETS=("subset1" "subset2")
 # Add as many subpopulations as you need to analyze.
-# Make sure to include .filelists in your species' bqsr directory.
+# Make sure to include .filelists in your species' vcf_bqsr directory.
 # Each file list should contain paths of post-bqsr bam files of the samples you want to analyze in each subset.
 
 # PATHS TO EXECUTABLES
@@ -36,13 +36,13 @@ run_angsd_saf() {
     local FILELIST="${SPECIES_ID}_bqsr/${SPECIES_ID}_${SUBSET}.filelist"
     local OUT_PREFIX="$OUTPUT_SFS_DIR/${SPECIES_ID}_$SUBSET"
     
-    # 1. SAF Generation
+    # 1. SAF Generation (modify parameters as you wish)
     if [[ ! -f "${OUT_PREFIX}.saf.idx" ]]; then
         echo "Processing SAF for $SUBSET..."
         # Ensure unix format
         dos2unix "$FILELIST" 2>/dev/null
 
-        $ANGSD_PATH \ # modify parameters as you wish
+        $ANGSD_PATH \
             -b "$FILELIST" \
             -ref "$REF_GENOME" \
             -anc "$REF_GENOME" \
@@ -53,9 +53,8 @@ run_angsd_saf() {
 			-minMapQ 20 \
 			-minQ 30 \
 			-remove_bads 1 \
-			-uniqueOnly 1  \
-			-only_proper_pairs 1  \
-			-baq 1  \
+			-uniqueOnly 1 \
+			-baq 1 \
 			-C 50
     else
         echo "-> SAF index already exists for $SUBSET. Skipping."
