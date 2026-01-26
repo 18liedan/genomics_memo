@@ -88,6 +88,7 @@ seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
 #### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
 ```
 samtools faidx ge_ref_softmasked_auto.fa
+
 # 1. Generate genome sizes (same as before)
 cut -f1,2 ge_ref_softmasked_auto.fa.fai > genome.sizes
 
