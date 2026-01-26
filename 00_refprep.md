@@ -153,16 +153,17 @@ seqkit seq -n gfb_ref_softmasked_auto.fa  #check if it is really removed
 ```
 #### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
 ```
-samtools faidx mhe_ref_softmasked_auto.fa
-cut -f1,2 mhe_ref_softmasked_auto.fa.fai > genome.sizes
-bedtools sort -g genome.sizes -i mhe_ref_masked_regions.bed > mhe_masked.sorted.bed
-bedtools merge -i mhe_masked.sorted.bed > mhe_masked.merged.bed
-bedtools complement -i mhe_masked.merged.bed -g genome.sizes > mhe_nonmasked_sites.bed
-awk '{print $1":"$2+1"-"$3}' mhe_nonmasked_sites.bed > mhe_nonmasked_sites.regions
+samtools faidx ge_ref_softmasked_auto.fa
 
-# check if it is ok (should not print anything if all is ok)
-comm -3 <(cut -f1 genome.sizes | sort -u) <(cut -f1 mhe_masked.merged.bed | sort -u) | head
-awk 'NR==FNR{len[$1]=$2;next} ($3>len[$1]){print "BAD", $0, "len="len[$1]}' genome.sizes mhe_masked.merged.bed | head
+# 1. Generate genome sizes
+cut -f1,2 ge_ref_softmasked_auto.fa.fai > genome.sizes
+
+# 2. Sort, Merge, Complement, and Convert to 1-based in one go
+bedtools sort -g genome.sizes -i ge_ref_masked_regions.bed | \
+bedtools merge -i - | \
+bedtools complement -i - -g genome.sizes | \
+awk 'BEGIN{OFS="\t"} {$2=$2+1; print $$1, $$2, $$3}' > ge_nonmasked_regions.txt
+
 ```
 #### Index final reference genome
 ```
