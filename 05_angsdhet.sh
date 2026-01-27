@@ -120,7 +120,6 @@ run_angsd_het() {
         "$ANGSD_PATH/misc/realSFS" \
             "$OUTPUT_PREFIX.saf.idx" \
             -P "$THREADS_PER_JOB" \
-			-fold 1 \
             > "$EST_FILE"
     else
         echo "-> .est.ml file already exists for $sample."
