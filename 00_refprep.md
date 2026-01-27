@@ -153,16 +153,16 @@ seqkit seq -n gfb_ref_softmasked_auto.fa  #check if it is really removed
 ```
 #### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
 ```
-samtools faidx ge_ref_softmasked_auto.fa
+samtools faidx mhe_ref_softmasked_auto.fa
 
 # 1. Generate genome sizes
-cut -f1,2 ge_ref_softmasked_auto.fa.fai > genome.sizes
+cut -f1,2 mhe_ref_softmasked_auto.fa.fai > genome.sizes
 
 # 2. Sort, Merge, Complement, and Convert to 1-based in one go
-bedtools sort -g genome.sizes -i ge_ref_masked_regions.bed | \
+bedtools sort -g genome.sizes -i mhe_ref_masked_regions.bed | \
 bedtools merge -i - | \
 bedtools complement -i - -g genome.sizes | \
-awk 'BEGIN{OFS="\t"} {$2=$2+1; print $$1, $$2, $$3}' > ge_nonmasked_regions.txt
+awk 'BEGIN{OFS="\t"} {$2=$2+1; print $$1, $$2, $$3}' > mhe_nonmasked_regions.txt
 
 ```
 #### Index final reference genome
