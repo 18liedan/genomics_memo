@@ -96,7 +96,8 @@ cut -f1,2 ge_ref_softmasked_auto.fa.fai > genome.sizes
 bedtools sort -g genome.sizes -i ge_ref_masked_regions.bed | \
 bedtools merge -i - | \
 bedtools complement -i - -g genome.sizes | \
-awk 'BEGIN{OFS="\t"} {$2=$2+1; print $$1, $$2, $$3}' > ge_nonmasked_regions.txt
+awk 'BEGIN{FS="\t"; OFS="\t"} {$2=$2+1; print $1, $2, $3}' > ge_nonmasked_regions.txt
+angsd sites index ge_nonmasked_regions.txt
 ```
 #### Index final reference genome
 ```
@@ -162,8 +163,8 @@ cut -f1,2 mhe_ref_softmasked_auto.fa.fai > genome.sizes
 bedtools sort -g genome.sizes -i mhe_ref_masked_regions.bed | \
 bedtools merge -i - | \
 bedtools complement -i - -g genome.sizes | \
-awk 'BEGIN{OFS="\t"} {$2=$2+1; print $$1, $$2, $$3}' > mhe_nonmasked_regions.txt
-
+awk 'BEGIN{FS="\t"; OFS="\t"} {$2=$2+1; print $1, $2, $3}' > mhe_nonmasked_regions.txt
+angsd sites index mhe_nonmasked_regions.txt
 ```
 #### Index final reference genome
 ```
