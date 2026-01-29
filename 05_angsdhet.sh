@@ -143,7 +143,7 @@ OUTPUT_SUMMARY_FILE="${OUTPUT_SFS_DIR}/${SPECIES_ID}_angsdhet_summary.txt"
 echo -e "SampleID\tHomRef\tHeterozygous\tHomAlt\tTotalSites\tHeterozygosity" > "$OUTPUT_SUMMARY_FILE"
 
 # Iterate through sample list to maintain order, rather than globbing
-while read -r sample; do
+while read -r sample || [ -n "$sample" ]; do
     # Remove carriage returns if present
     sample=$(echo "$sample" | tr -d '\r')
     est_file="${OUTPUT_SFS_DIR}/${sample}.est.ml"
