@@ -24,7 +24,7 @@ They go in the following order, and in most cases the inputs for one script depe
 🪢 07_roh.sh is a script to run PLINK to calculate runs of homozygosity for all samples.
 - [roh_plot.R](./roh_plot.R) is a custom R script used to plot ROH results.
 
-📍 08_pca.sh is a script to run PCA on all samples, with options to subsample different datasets.
+📍 [08_pca.md](./08_pca.md) is a series of command line to manually run PCA on samples.
 
 📍 09_admixture.sh is a script to run ADMIXTURE on all samples, with options to subsample different datasets.
 
