@@ -84,6 +84,8 @@ seqkit grep -f keep_ids.txt ge_ref_sort_lr.fa | \
 
 #### Extract soft-masked sites using a [python script](./get_masked_regions.py) for downstream analyses where you want to remove repeated sites
 `python3 get_masked_regions.py ge_ref_softmasked_auto.fa > ge_ref_masked_regions.bed`
+gatk IndexFeatureFile -I ge_ref_masked_regions.bed
+bgzip ge_ref_masked_regions.bed && tabix -p bed ge_ref_masked_regions.bed.gz
 
 #### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
 ```
@@ -152,6 +154,11 @@ seqkit grep -v -p "Scaffold42" mhe_ref_softmasked_autotemp.fa >  mhe_ref_softmas
 rm  mhe_ref_softmasked_autotemp.fa #remove temporary file
 seqkit seq -n gfb_ref_softmasked_auto.fa  #check if it is really removed
 ```
+#### Extract soft-masked sites using a [python script](./get_masked_regions.py) for downstream analyses where you want to remove repeated sites
+`python3 get_masked_regions.py mh_ref_softmasked_auto.fa > mhe_ref_masked_regions.bed`
+gatk IndexFeatureFile -I mhe_ref_masked_regions.bed
+bgzip mhe_ref_masked_regions.bed && tabix -p bed mhe_ref_masked_regions.bed.gz
+
 #### Based on these masked sites, make a NON-masked region sites file (e.g.to be included in analyses) - you will need this in ANGSD
 ```
 samtools faidx mhe_ref_softmasked_auto.fa
