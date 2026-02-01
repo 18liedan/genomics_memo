@@ -159,36 +159,18 @@ for SUBSET in "${SUBSETS[@]}"; do
     fi
 
     # --- 3d. Softmasking: Missingness & Repeat Masking ---
-    SNPS_SOFT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered.snps.vcf.gz"
-    if [[ ! -f "$SNPS_SOFT" ]]; then
-        log "  - First soft-filtering ($SUBSET: Missingness 0.8)"
-		vcftools --gzvcf "$SNPS_HARD" --max-missing 0.8 --recode --stdout | \
-			bgzip -c > "$SNPS_SOFT"
-    else
-        log "  - Soft-filtered VCF for $SUBSET already exists. Skipping."
-    fi
-
-	SNPS_BIALLELIC="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_biallelic.snps.vcf.gz"
-    if [[ ! -f "$SNPS_BIALLELIC" ]]; then
-        log "  - Second soft-filtering ($SUBSET: Missingness 0.8, biallelic only)"
-		vcftools --gzvcf "$SNPS_SOFT" --max-alleles 2 --min-alleles 2 --recode --stdout | \
-			bgzip -c > "$SNPS_BIALLELIC"
-    else
-        log "  - Soft-filtered biallelic VCF for $SUBSET already exists. Skipping."
-    fi
-
-	SNPS_BIALLELIC_NOREPEAT ="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat_biallelic.snps.vcf.gz"
-    if [[ ! -f "$SNPS_NOREPEAT" ]]; then
-        log "  - Third soft-filtering ($SUBSET: Missingness 0.8, biallelic, no repeats)"
+	SNPS_BIALLELIC_NOREPEAT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat_biallelic.snps.vcf.gz"
+    if [[ ! -f "$SNPS_BIALLELIC_NOREPEAT" ]]; then
+        log "  - Second soft-filtering ($SUBSET: Missingness 0.8, biallelic only, filter out masked regions)"
         if [[ -f "$MASK_BED" ]]; then
-            vcftools --gzvcf "$SNPS_BIALLELIC" --exclude-bed "$MASK_BED" --recode --stdout | \
-                bgzip -c > "$SNPS_NOREPEAT"
+			vcftools --gzvcf "$SNPS_HARD" --max-missing 0.8 --max-alleles 2 --min-alleles 2 --exclude-bed "$MASK_BED" --recode --stdout | \
+				bgzip -c > "$SNPS_BIALLELIC_NOREPEAT"
 			gatk IndexFeatureFile -I "$SNPS_BIALLELIC_NOREPEAT"
-        else
+		else
 			log "  - Hard masked sites not found in ref directory. Skipping."
         fi
     else
-        log "  - No repeat VCF for $SUBSET already exists. Skipping."
+        log "  - Soft-filtered biallelic no-repeat VCF for $SUBSET already exists. Skipping."
     fi
 done
 
@@ -203,10 +185,7 @@ SUMMARY_OUT="${SPECIES_ID}_stats/${SPECIES_ID}_final_variant_summary.txt"
     for SUBSET in "${SUBSETS[@]}"; do
         SUBSET_DIR="${VCF_DIR}/${SUBSET}"
         GENO="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_genotyped.vcf.gz"
-        HARD="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_hardfiltered.snps.vcf.gz"
-        SOFT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered.snps.vcf.gz"
-        SOFT_BIALLELIC="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_biallelic.snps.vcf.gz"
-        SNPS_BIALLELIC_NOREPEAT ="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat_biallelic.snps.vcf.gz"
+        SNPS_BIALLELIC_NOREPEAT="${SUBSET_DIR}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat_biallelic.snps.vcf.gz"
 
         # Helper function to count variants safely
         count_vars() {
@@ -223,8 +202,6 @@ SUMMARY_OUT="${SPECIES_ID}_stats/${SPECIES_ID}_final_variant_summary.txt"
         
         COUNT_GENO=$(count_vars "$GENO")
         COUNT_HARD=$(count_vars "$HARD")
-        COUNT_SOFT=$(count_vars "$SOFT")
-        COUNT_SOFT_BIALLELIC=$(count_vars "$SOFT_BIALLELIC")
         COUNT_SOFT_NOREPEAT_BIALLELIC=$(count_vars "$SOFT_NOREPEAT_BIALLELIC")
 
         # Output to the summary file with correct STAGE labels
