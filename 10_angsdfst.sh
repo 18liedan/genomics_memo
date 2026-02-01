@@ -50,12 +50,14 @@ run_angsd_saf() {
             -anc "$REF_GENOME" \
             -out "$OUT_PREFIX" \
             -nThreads "$THREADS_PER_JOB" \
-            -doSaf 1 \
-			-GL 2 \
-			-minMapQ 30 \
-			-minQ 20 \
-			-baq 1 \
-			-rf "$INCLUDE_REGIONS"
+            -doCounts 1 \
+            -minMapQ 30 \
+            -minQ 20 \
+            -C 50 \
+            -remove_bads 1 \
+            -uniqueOnly 1 \
+            -baq 1 \
+            -sites "$INCLUDE_REGIONS"
     else
         echo "-> SAF index already exists for $SUBSET. Skipping."
     fi
