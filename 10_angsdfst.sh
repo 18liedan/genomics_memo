@@ -22,8 +22,9 @@ THREADS_PER_JOB=8
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
 OUTPUT_SFS_DIR="${SPECIES_ID}_sfspop_folded"
-NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.regions"
-
+NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.txt"
+	# create & index this file using commands in 00_refprep.md
+	
 mkdir -p "$OUTPUT_SFS_DIR"
 
 # Export variables for GNU Parallel subshells
