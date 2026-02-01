@@ -34,7 +34,7 @@ SINGULARITY_BIN="${SINGULARITY_BIN:-singularity}"
 BOOTSTRAP_SCRIPT="smcpp_bootstrap.py"
 CSV_SCRIPT="smcpp_makecsv.py"
 
-# Bootstrap parameters (Used in Step 3 & 4)
+# Bootstrap parameters
 CHUNK_SIZE="5000000"    # 5Mb
 CHUNKS_PER_CHR="10"     # How many chunks to sample per synthetic chromosome
 NR_CHROMOSOMES="30"     # Number of synthetic chromosomes per replicate
@@ -73,7 +73,7 @@ SAMPLES_COMMA=$(paste -sd "," "$SAMPLE_FILE")
 POP_SPEC="${POP_NAME}:${SAMPLES_COMMA}"
 log "Population specification: $POP_SPEC"
 
-# NOW export everything needed for 'parallel'
+# export everything needed for 'parallel'
 export SMC_DIR VCF POP_SPEC THREADS_PER_JOB SIF SINGULARITY_BIN MASK_BED
 
 ###############################################################################
