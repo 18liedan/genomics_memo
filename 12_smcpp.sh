@@ -4,9 +4,9 @@ set -euo pipefail
 ###############################################################################
 # 1. RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
-SPECIES_ID="mhe"       # Change this for different species
+SPECIES_ID="yourspecies"       # Change this for different species
 SUBSET_ID="subset1"      # Change this for different subpopulations
-POP_NAME="JP"           # Short name for the subpopulation
+POP_NAME="popname"           # Short name for subpopulation for software to use
 
 # Paths
 VCF_DIR="${SPECIES_ID}_vcf_bqsr/${SUBSET_ID}"
