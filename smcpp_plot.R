@@ -20,11 +20,11 @@ ggplot(all_data, aes(x = x, y = y, group = interaction(label, population), color
   
   # Bootstraps
   geom_step(data = subset(all_data, type == "Bootstrap"), 
-            alpha = 0.2, size = 0.3) +
+            alpha = 0.2, linewidth = 0.3) +
   
   # Main Estimates
   geom_step(data = subset(all_data, type == "Main"), 
-            alpha = 1.0, size = 0.8) +
+            alpha = 1.0, linewidth = 0.8) +
   
   scale_color_manual(values = c("pop1" = "firebrick", "pop2" = "dodgerblue")) +
   
