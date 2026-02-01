@@ -19,8 +19,8 @@ MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed.gz"
 [[ -f "$SAMPLE_FILE" ]] && sed -i 's/\r//' "$SAMPLE_FILE"
 
 # Parameters
-MU="1.4e-8"
-GEN_TIME="9.93"
+MU="1.4e-8" # change this according to your species
+GEN_TIME="9.93" # change this according to your species
 KNOTS="30"
 N_REPS="20"
 
