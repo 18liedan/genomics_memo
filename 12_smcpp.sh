@@ -12,33 +12,32 @@ POP_NAME="popname"           # Short name for the subpopulation
 VCF_DIR="${SPECIES_ID}_vcf_bqsr/${SUBSET_ID}"
 VCF="${VCF_DIR}/${SPECIES_ID}_${SUBSET_ID}_clean.vcf.gz"
 REF_FAI="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa.fai"
-SAMPLE_FILE="${SPECIES_ID}_ref/${SPECIES_ID}_samples_${SUBSET_ID}.txt" # One sample name per line
+SAMPLE_FILE="${SPECIES_ID}_ref/${SPECIES_ID}_samples_${SUBSET_ID}.txt"
 MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed.gz"
 
-# Clean the sample file and the contig list of any Windows line endings
-[[ -f "$SAMPLE_FILE" ]] && sed -i 's/\r//' "$SAMPLE_FILE"
-
 # Parameters
-MU="1.4e-8" # change this according to your species
-GEN_TIME="9.93" # change this according to your species
+MU="1.4e-8"
+GEN_TIME="9.93"
 KNOTS="30"
-N_REPS="20"
+T_START="1"
+T_END="100000"
+SPLINE="pchip"
 
-# Parallelism setting (Optimized for NIG supercomputer; 1.5TB RAM / 192 Cores)
-MAX_JOBS=12
-THREADS_PER_JOB=8
+# Bootstrap parameters
+CHUNK_SIZE="5000000"
+CHUNKS_PER_CHR="20"
+NR_CHROMOSOMES="10"
+N_BOOTSTRAPS="20" 
+
+# Parallelism settings (Optimized for 192 cores)
+MAX_JOBS=32              
+THREADS_PER_JOB=4        
 
 # Singularity & Scripts
 SIF="smcpp.sif"
 SINGULARITY_BIN="${SINGULARITY_BIN:-singularity}"
 BOOTSTRAP_SCRIPT="smcpp_bootstrap.py"
 CSV_SCRIPT="smcpp_makecsv.py"
-
-# Bootstrap parameters
-CHUNK_SIZE="5000000"    # 5Mb
-CHUNKS_PER_CHR="10"     # How many chunks to sample per synthetic chromosome
-NR_CHROMOSOMES="30"     # Number of synthetic chromosomes per replicate
-N_REPS="20" 
 
 ###############################################################################
 # 2. SETUP & DIRECTORIES
@@ -50,14 +49,12 @@ BOOT_DIR="${OUTDIR}/bootstrap_results"
 FINAL_JSON_DIR="${OUTDIR}/final_jsons"
 OUTPUT_CSV="${FINAL_JSON_DIR}/${OUTDIR}.csv"
 CONTIG_LIST_FILE="${OUTDIR}/contig_list.txt" 
-BOOT_PREFIX="${BOOT_DIR}/rep"
 
 mkdir -p "$SMC_DIR" "$FULL_EST_DIR" "$BOOT_DIR" "$FINAL_JSON_DIR"
 
 log() { printf '[%s] %s\n' "$(date +'%F %T')" "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 
-# Helper function to run SMC++ inside Singularity
 smcpp_run() { "${SINGULARITY_BIN}" exec "$SIF" smc++ "$@"; }
 export -f smcpp_run
 
@@ -65,49 +62,25 @@ export -f smcpp_run
 # 3. CONSTRUCT POPULATION SPECIFICATION
 ###############################################################################
 if [[ ! -f "$SAMPLE_FILE" ]]; then die "Sample list $SAMPLE_FILE not found"; fi
-
-# Clean Windows line endings if present
 sed -i 's/\r//' "$SAMPLE_FILE"
-
 SAMPLES_COMMA=$(paste -sd "," "$SAMPLE_FILE")
 POP_SPEC="${POP_NAME}:${SAMPLES_COMMA}"
-log "Population specification: $POP_SPEC"
-
-# export everything needed for 'parallel'
 export SMC_DIR VCF POP_SPEC THREADS_PER_JOB SIF SINGULARITY_BIN MASK_BED
 
 ###############################################################################
 # 4. PREPARE CONTIGS
 ###############################################################################
-log "Preparing contig list (filtering for contigs > 1Mb)..."
-CONTIG_REGEX="${CONTIG_REGEX:-}"
-
-# Change {print $1 "\t" $2} to just {print $1}
-if [[ -n "${CONTIG_REGEX:-}" ]]; then
-    # We check if $2 > 1000000, but we ONLY print $1 (the name)
-    awk '$2 > 1000000 {print $1}' "$REF_FAI" | grep -E "${CONTIG_REGEX}" > "$CONTIG_LIST_FILE" || die "No contigs match regex or meet size criteria."
-else
-    # We check if $2 > 1000000, but we ONLY print $1
-    awk '$2 > 1000000 {print $1}' "$REF_FAI" > "$CONTIG_LIST_FILE"
-fi
-
-# Check if we actually found any contigs
-if [[ ! -s "$CONTIG_LIST_FILE" ]]; then
-    die "No contigs found after filtering by size (>1Mb). Check your .fai file paths."
-fi
-
-log "Found $(wc -l < "$CONTIG_LIST_FILE") contigs for analysis."
+log "Preparing contig list..."
+awk '$2 > 1000000 {print $1}' "$REF_FAI" > "$CONTIG_LIST_FILE"
+if [[ ! -s "$CONTIG_LIST_FILE" ]]; then die "No contigs >1Mb found."; fi
 
 ###############################################################################
-# 5. STEP 1: vcf2smc (PARALLEL BY CONTIG) - WITH SKIP LOGIC
+# 5. STEP 1: vcf2smc
 ###############################################################################
-log "Step 1: Converting VCF to SMC++ format (Parallel)..."
-
+log "Step 1: Converting VCF to SMC++ format..."
 parallel --jobs "$MAX_JOBS" --progress \
     "if [ ! -f $SMC_DIR/{}.smc.gz ]; then \
         smcpp_run vcf2smc --mask $MASK_BED --cores $THREADS_PER_JOB $VCF $SMC_DIR/{}.smc.gz {} $POP_SPEC; \
-     else \
-        echo 'Skipping {}: file exists'; \
      fi" \
     :::: "$CONTIG_LIST_FILE"
 
@@ -119,100 +92,100 @@ FULL_POP_DIR="${FULL_EST_DIR}/${POP_NAME}"
 mkdir -p "$FULL_POP_DIR"
 
 if [[ ! -f "${FULL_POP_DIR}/model.final.json" ]]; then
+    # Expand wildcards here to ensure Singularity gets a clean list of files
+    SMC_FILES=("$SMC_DIR"/*.smc.gz)
 	smcpp_run estimate \
         --cores $((MAX_JOBS * THREADS_PER_JOB)) \
         --knots "$KNOTS" \
+        --spline "$SPLINE" \
+        --timepoints "$T_START" "$T_END" \
         -o "$FULL_POP_DIR" \
         "$MU" \
-        "$SMC_DIR"/*.smc.gz
+        "${SMC_FILES[@]}"
 fi
 
 ###############################################################################
 # 7. STEP 3: Generate Bootstrap Replicates
 ###############################################################################
-log "Step 3: Generating $N_REPS bootstrap replicates..."
+log "Step 3: Checking bootstrap replicates..."
+ALL_SMC_FILES=("$SMC_DIR"/*.smc.gz)
+# Check for the last expected file to see if we need to regenerate
+LAST_BOOT_FILE="${BOOT_DIR}/bootstrap_${N_BOOTSTRAPS}/bootstrap_chr${NR_CHROMOSOMES}.gz"
 
-# 1. Find the files and verify they exist
-ALL_SMC_FILES=("${SMC_DIR}"/*.smc.gz)
-if [[ ! -f "${ALL_SMC_FILES[0]}" ]]; then
-    die "No SMC files found in ${SMC_DIR}. Check Step 1 logs."
-fi
-
-log "Found ${#ALL_SMC_FILES[@]} SMC files. Starting bootstrap resampling..."
-
-# 2. Run the bootstrap replicates
-for i in $(seq 1 "$N_REPS"); do
-    REP_DIR="${BOOT_DIR}/rep_${i}"
-    mkdir -p "$REP_DIR"
-
-    ALL_BOOTSTRAPS_PRESENT=true
-    for b in $(seq 1 "$N_REPS"); do
-        # Check if any .gz file exists in the specific bootstrap folder
-        if ! compgen -G "${REP_DIR}/bootstrap_${b}/*.gz" > /dev/null; then
-            ALL_BOOTSTRAPS_PRESENT=false
-            break
-        fi
-    done
-
-    if [ "$ALL_BOOTSTRAPS_PRESENT" = true ]; then
-        log "Skipping replicate $i: All $N_REPS bootstrap folders are present and contain data, but please check if .gz files are not empty."
-        continue
-    fi
-
-	python3 "$BOOTSTRAP_SCRIPT" \
-        --nr_bootstraps "$N_REPS" \
+if [[ -f "$LAST_BOOT_FILE" ]]; then
+    log "Skip Step 3: Bootstrap files already exist."
+else
+    log "Generating $N_BOOTSTRAPS bootstrap replicates..."
+    python3 "$BOOTSTRAP_SCRIPT" \
+        --nr_bootstraps "$N_BOOTSTRAPS" \
         --nr_chromosomes "$NR_CHROMOSOMES" \
         --chunks_per_chromosome "$CHUNKS_PER_CHR" \
         --chunk_size "$CHUNK_SIZE" \
-        "${REP_DIR}/bootstrap" \
-        "${ALL_SMC_FILES[@]}" 
-done
+        "${BOOT_DIR}/bootstrap" \
+        "${ALL_SMC_FILES[@]}"
+fi
 
 ###############################################################################
 # 8. STEP 4: BOOTSTRAP ESTIMATION
 ###############################################################################
 log "Step 4: Running bootstrap estimates..."
 
-run_rep_est() {
-    local i=$1
-    local BOOT_PREFIX=$2
-    local POP_NAME=$3
-    local KNOTS=$4
-    local MU=$5
-    local THREADS=$6
+run_single_boot() {
+    local BOOT_SUBDIR=$1
+    local POP_NAME=$2
+    local KNOTS=$3
+    local MU=$4
+    local THREADS=$5
+    local SPLINE=$6
+    local T_START=$7
+    local T_END=$8
     
-    local REP_DIR="${BOOT_PREFIX}_${i}"
-    local REP_POP_DIR="${REP_DIR}/${POP_NAME}"
+    local OUT_DIR="${BOOT_SUBDIR}/${POP_NAME}_estimate"
     
-    if [[ ! -f "${REP_POP_DIR}/model.final.json" ]]; then
-        mkdir -p "$REP_POP_DIR"
-        # Again, pass the directory ($REP_DIR) glob
-        smcpp_run estimate \
-            --cores "$THREADS" \
-            --knots "$KNOTS" \
-            -o "$REP_POP_DIR" \
-            "$MU" \
-            "$REP_DIR"/*.smc.gz
+    if [[ -f "${OUT_DIR}/model.final.json" ]]; then
+        return 0
     fi
-}
-export -f run_rep_est
 
-# Run bootstrap replicates in parallel
-seq 0 $((N_REPS - 1)) | parallel --jobs "$MAX_JOBS" --progress \
-    run_rep_est {} "$BOOT_PREFIX" "$POP_NAME" "$KNOTS" "$MU" "$THREADS_PER_JOB"
+    mkdir -p "$OUT_DIR"
+    
+    # Use nullglob so missing files don't result in a literal "*" string
+    shopt -s nullglob
+    local FILES=("$BOOT_SUBDIR"/*.gz)
+    
+    if [ ${#FILES[@]} -eq 0 ]; then
+        echo "Warning: No .gz files found in $BOOT_SUBDIR"
+        return 1
+    fi
+
+    smcpp_run estimate \
+        --cores "$THREADS" \
+        --knots "$KNOTS" \
+        --spline "$SPLINE" \
+        --timepoints "$T_START" "$T_END" \
+        -o "$OUT_DIR" \
+        "$MU" \
+        "${FILES[@]}"
+}
+
+export -f run_single_boot
+
+# FIX: Added -mindepth 1 so it doesn't try to run 'estimate' on the parent BOOT_DIR
+find "${BOOT_DIR}" -mindepth 1 -maxdepth 1 -type d -name "bootstrap_*" | \
+parallel --jobs "$MAX_JOBS" --progress \
+    run_single_boot {} "$POP_NAME" "$KNOTS" "$MU" "$THREADS_PER_JOB" "$SPLINE" "$T_START" "$T_END"
 
 ###############################################################################
 # 9. STEP 5: AGGREGATE RESULTS
 ###############################################################################
 log "Step 5: Collecting and Converting Results..."
 
-# Main result
 cp "${FULL_POP_DIR}/model.final.json" "${FINAL_JSON_DIR}/${POP_NAME}_main.json"
 
-# Replicate results
-for f in "${BOOT_DIR}"/rep_*/"${POP_NAME}"/model.final.json; do
-    rep_num=$(echo "$f" | grep -oE 'rep_[0-9]+' | cut -d'_' -f2)
-    cp "$f" "${FINAL_JSON_DIR}/${POP_NAME}_rep${rep_num}.json"
+for f in "${BOOT_DIR}"/bootstrap_*/"${POP_NAME}_estimate"/model.final.json; do
+    if [[ -f "$f" ]]; then
+        boot_num=$(echo "$f" | grep -oE 'bootstrap_[0-9]+' | cut -d'_' -f2)
+        cp "$f" "${FINAL_JSON_DIR}/${POP_NAME}_boot${boot_num}.json"
+    fi
 done
 
 export GEN_TIME="$GEN_TIME"
