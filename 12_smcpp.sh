@@ -6,7 +6,7 @@ set -euo pipefail
 ###############################################################################
 SPECIES_ID="yourspecies"       # Change this for different species
 SUBSET_ID="subset1"      # Change this for different subpopulations
-POP_NAME="popname"           # Short name for subpopulation for software to use
+POP_NAME="popname"           # Short name for the subpopulation
 
 # Paths
 VCF_DIR="${SPECIES_ID}_vcf_bqsr/${SUBSET_ID}"
@@ -24,9 +24,9 @@ GEN_TIME="9.93"
 KNOTS="30"
 N_REPS="20"
 
-# Parallelism settings
-MAX_JOBS=12              # How many contigs/replicates to run at once
-THREADS_PER_JOB=4        # Cores given to EACH smc++ process
+# Parallelism setting (Optimized for NIG supercomputer; 1.5TB RAM / 192 Cores)
+MAX_JOBS=12
+THREADS_PER_JOB=8
 
 # Singularity & Scripts
 SIF="smcpp.sif"
@@ -41,7 +41,7 @@ NR_CHROMOSOMES="30"     # Number of synthetic chromosomes per replicate
 N_REPS="20" 
 
 ###############################################################################
-# 2. DYNAMIC SETUP & DIRECTORIES
+# 2. SETUP & DIRECTORIES
 ###############################################################################
 OUTDIR="${SPECIES_ID}_smcpp_${SUBSET_ID}"
 SMC_DIR="${OUTDIR}/smc_per_contig"
@@ -134,21 +134,32 @@ log "Step 3: Generating $N_REPS bootstrap replicates..."
 
 # 1. Find the files and verify they exist
 ALL_SMC_FILES=("${SMC_DIR}"/*.smc.gz)
-
-# 2. Safety Check: If the first element doesn't exist, the glob failed
 if [[ ! -f "${ALL_SMC_FILES[0]}" ]]; then
     die "No SMC files found in ${SMC_DIR}. Check Step 1 logs."
 fi
 
 log "Found ${#ALL_SMC_FILES[@]} SMC files. Starting bootstrap resampling..."
 
-# 3. Run the bootstrap replicates
+# 2. Run the bootstrap replicates
 for i in $(seq 1 "$N_REPS"); do
     REP_DIR="${BOOT_DIR}/rep_${i}"
     mkdir -p "$REP_DIR"
-    
-    # Use the array we just created
-    python3 "$BOOTSTRAP_SCRIPT" \
+
+    ALL_BOOTSTRAPS_PRESENT=true
+    for b in $(seq 1 "$N_REPS"); do
+        # Check if any .gz file exists in the specific bootstrap folder
+        if ! compgen -G "${REP_DIR}/bootstrap_${b}/*.gz" > /dev/null; then
+            ALL_BOOTSTRAPS_PRESENT=false
+            break
+        fi
+    done
+
+    if [ "$ALL_BOOTSTRAPS_PRESENT" = true ]; then
+        log "Skipping replicate $i: All $N_REPS bootstrap folders are present and contain data, but please check if .gz files are not empty."
+        continue
+    fi
+
+	python3 "$BOOTSTRAP_SCRIPT" \
         --nr_bootstraps "$N_REPS" \
         --nr_chromosomes "$NR_CHROMOSOMES" \
         --chunks_per_chromosome "$CHUNKS_PER_CHR" \
@@ -160,6 +171,8 @@ done
 ###############################################################################
 # 8. STEP 4: BOOTSTRAP ESTIMATION
 ###############################################################################
+log "Step 4: Running bootstrap estimates..."
+
 run_rep_est() {
     local i=$1
     local BOOT_PREFIX=$2
@@ -189,7 +202,7 @@ seq 0 $((N_REPS - 1)) | parallel --jobs "$MAX_JOBS" --progress \
     run_rep_est {} "$BOOT_PREFIX" "$POP_NAME" "$KNOTS" "$MU" "$THREADS_PER_JOB"
 
 ###############################################################################
-# 9. STEP 5 & 6: AGGREGATE RESULTS
+# 9. STEP 5: AGGREGATE RESULTS
 ###############################################################################
 log "Step 5: Collecting and Converting Results..."
 
