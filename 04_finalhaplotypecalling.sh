@@ -207,8 +207,6 @@ SUMMARY_OUT="${SPECIES_ID}_stats/${SPECIES_ID}_final_variant_summary.txt"
         # Output to the summary file with correct STAGE labels
         echo -e "${SUBSET}\tRaw_Genotyped\t${COUNT_GENO}"
         echo -e "${SUBSET}\tHardFiltered_SNPs\t${COUNT_HARD}"
-        echo -e "${SUBSET}\tSoftFiltered_SNPs\t${COUNT_SOFT}"
-        echo -e "${SUBSET}\tBiallelic_SNPs\t${COUNT_SOFT_BIALLELIC}"
         echo -e "${SUBSET}\tNoRepeatBiallelic_SNPs\t${COUNT_SOFT_NOREPEAT_BIALLELIC}"
     done
 } > "$SUMMARY_OUT"
