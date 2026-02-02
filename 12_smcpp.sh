@@ -80,7 +80,7 @@ if [[ ! -s "$CONTIG_LIST_FILE" ]]; then die "No contigs >1Mb found."; fi
 log "Step 1: Converting VCF to SMC++ format..."
 parallel --jobs "$MAX_JOBS" --progress \
     "if [ ! -f $SMC_DIR/{}.smc.gz ]; then \
-        smcpp_run vcf2smc --mask $MASK_BED --cores $THREADS_PER_JOB $VCF $SMC_DIR/{}.smc.gz {} $POP_SPEC; \
+        smcpp_run vcf2smc -c 50000 --mask $MASK_BED --cores $THREADS_PER_JOB $VCF $SMC_DIR/{}.smc.gz {} $POP_SPEC; \
      fi" \
     :::: "$CONTIG_LIST_FILE"
 
