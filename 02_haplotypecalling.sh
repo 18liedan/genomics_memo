@@ -148,7 +148,7 @@ if [[ ! -f "$SNPS_HARD" ]]; then
     gatk SelectVariants -V "$GENOTYPED_VCF" -select-type SNP -O "${VCF_DIR}/temp_snps.vcf.gz"
     gatk VariantFiltration \
         -V "${VCF_DIR}/temp_snps.vcf.gz" \
-        -filter "QD < 2.0 || QUAL < 30.0 || SOR > 3.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0" \
+        -filter "QD < 2.0 || QUAL < 30.0 || SOR > 3.0 || FS > 60.0 || MQ < 40.0 || ReadPosRankSum < -8.0" \
         --filter-name "snp_hard_filter" -O "${VCF_DIR}/temp_snps_filt.vcf.gz"
     bcftools view -f PASS "${VCF_DIR}/temp_snps_filt.vcf.gz" -Oz -o "$SNPS_HARD"
     gatk IndexFeatureFile -I "$SNPS_HARD"
