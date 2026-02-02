@@ -13,11 +13,10 @@ VCF_DIR="${SPECIES_ID}_vcf_bqsr/${SUBSET_ID}"
 VCF="${VCF_DIR}/${SPECIES_ID}_${SUBSET_ID}_clean.vcf.gz"
 REF_FAI="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa.fai"
 SAMPLE_FILE="${SPECIES_ID}_ref/${SPECIES_ID}_samples_${SUBSET_ID}.txt"
-MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed.gz"
 
 # Parameters
-MU="1.4e-8"
-GEN_TIME="9.93"
+MU="1.4e-8" # adjust based on species
+GEN_TIME="9.93" #adjust based on species
 KNOTS="30"
 T_START="1"
 T_END="100000"
@@ -65,7 +64,7 @@ if [[ ! -f "$SAMPLE_FILE" ]]; then die "Sample list $SAMPLE_FILE not found"; fi
 sed -i 's/\r//' "$SAMPLE_FILE"
 SAMPLES_COMMA=$(paste -sd "," "$SAMPLE_FILE")
 POP_SPEC="${POP_NAME}:${SAMPLES_COMMA}"
-export SMC_DIR VCF POP_SPEC THREADS_PER_JOB SIF SINGULARITY_BIN MASK_BED
+export SMC_DIR VCF POP_SPEC THREADS_PER_JOB SIF SINGULARITY_BIN
 
 ###############################################################################
 # 4. PREPARE CONTIGS
@@ -80,7 +79,7 @@ if [[ ! -s "$CONTIG_LIST_FILE" ]]; then die "No contigs >1Mb found."; fi
 log "Step 1: Converting VCF to SMC++ format..."
 parallel --jobs "$MAX_JOBS" --progress \
     "if [ ! -f $SMC_DIR/{}.smc.gz ]; then \
-        smcpp_run vcf2smc -c 50000 --mask $MASK_BED --cores $THREADS_PER_JOB $VCF $SMC_DIR/{}.smc.gz {} $POP_SPEC; \
+        smcpp_run vcf2smc -c 50000 --cores $THREADS_PER_JOB $VCF $SMC_DIR/{}.smc.gz {} $POP_SPEC; \
      fi" \
     :::: "$CONTIG_LIST_FILE"
 
