@@ -109,12 +109,16 @@ if [[ ! -f "$MERGED_GVCF" ]]; then
     
     # Build the list of -V arguments
     VCF_INPUTS=()
-    while read -r sample; do
-        sample=$(echo "$sample" | tr -d '\r')
-        VCF_FILE="${SAMPLE_VCF_DIR}/${sample}.dp_filtered.g.vcf.gz"
+    while IFS= read -r sample || [[ -n "$sample" ]]; do
+        sample=${sample//$'\r'/} # strip CR if any
+        [[ -z "$sample" ]] && continue
+		VCF_FILE="${SAMPLE_VCF_DIR}/${sample}.dp_filtered.g.vcf.gz"
         if [[ -f "$VCF_FILE" ]]; then
             VCF_INPUTS+=("-V" "$VCF_FILE")
-        fi
+        else
+			log "ERROR: missing filtered gVCF for $sample: $VCF_FILE"
+			missing=1
+		fi
     done < "$SAMPLE_LIST"
 
     gatk --java-options "${COHORT_JAVA_OPTS}" CombineGVCFs \
