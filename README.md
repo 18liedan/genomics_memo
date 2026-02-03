@@ -16,7 +16,7 @@ They go in the following order, and in most cases the inputs for one script depe
 ⚖️ [03_bqsr.sh](./03_bqsr.sh) is a script to perform BQSR on all samples.
 
 🔡 [04_finalhaplotypecalling.sh](./04_finalhaplotypecalling.sh) is a script to call, merge, genotype, and filter final variants.
-Further manual filtering is recommended, based on the nature of your species/population/analyses.
+Further manual filtering, tailored for your species/population/downstream analyses, is recommended.
 
 🪢 [05_angsdhet.sh](05_angsdhet.sh) is a script to run ANGSD to calculate heterozygosity from sfs files per sample.
 
