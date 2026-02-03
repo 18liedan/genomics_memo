@@ -218,4 +218,5 @@ SUMMARY_OUT="${SPECIES_ID}_stats/${SPECIES_ID}_final_variant_summary.txt"
 } > "$SUMMARY_OUT"
 
 cat "$SUMMARY_OUT"
-log "Final variant calling completed for all subsets. Results are in $VCF_DIR"
+log "Final variant calling completed for all subsets. Results are in $VCF_DIR."
+log "Proceed with further manual filtering that suits the nature of your datasets and downstream analyses like ROH and SMC++."
