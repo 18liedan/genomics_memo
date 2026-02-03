@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ###############################################################################
 # 1. RESOURCE ALLOCATION & CONFIGURATION
 ###############################################################################
@@ -9,15 +8,15 @@ SUBSET_ID="subset1"      # Change this for different subpopulations
 POP_NAME="popname"           # Short name for the subpopulation
 
 # Paths
-VCF_DIR="${SPECIES_ID}_vcf_bqsr/${SUBSET_ID}"
-VCF="${VCF_DIR}/${SPECIES_ID}_${SUBSET_ID}_clean.vcf.gz"
+VCF_DIR="${SPECIES_ID}_vcf_bqsr/${SUBSET_ID}" # directory where post-BQSR VCF files are stored
+VCF="${VCF_DIR}/${SPECIES_ID}_forsmcpp.vcf.gz" # your VCF file for SMC++
 REF_FAI="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa.fai"
 SAMPLE_FILE="${SPECIES_ID}_ref/${SPECIES_ID}_samples_${SUBSET_ID}.txt"
 
 # Parameters
-MU="1.4e-8" # adjust based on species
-GEN_TIME="9.93" #adjust based on species
-KNOTS="30"
+MU="1.4e-8"
+GEN_TIME="7.64"
+KNOTS="16"
 T_START="1"
 T_END="100000"
 SPLINE="pchip"
@@ -29,8 +28,8 @@ NR_CHROMOSOMES="10"
 N_BOOTSTRAPS="20" 
 
 # Parallelism settings (Optimized for 192 cores)
-MAX_JOBS=32              
-THREADS_PER_JOB=4        
+MAX_JOBS=12
+THREADS_PER_JOB=8
 
 # Singularity & Scripts
 SIF="smcpp.sif"
@@ -64,7 +63,7 @@ if [[ ! -f "$SAMPLE_FILE" ]]; then die "Sample list $SAMPLE_FILE not found"; fi
 sed -i 's/\r//' "$SAMPLE_FILE"
 SAMPLES_COMMA=$(paste -sd "," "$SAMPLE_FILE")
 POP_SPEC="${POP_NAME}:${SAMPLES_COMMA}"
-export SMC_DIR VCF POP_SPEC THREADS_PER_JOB SIF SINGULARITY_BIN
+export SMC_DIR VCF POP_SPEC THREADS_PER_JOB SIF SINGULARITY_BIN MASK_BED
 
 ###############################################################################
 # 4. PREPARE CONTIGS
@@ -191,3 +190,4 @@ export GEN_TIME="$GEN_TIME"
 python3 "$CSV_SCRIPT" "$OUTPUT_CSV" "$POP_NAME" "${FINAL_JSON_DIR}"/*.json
 
 log "Workflow complete. Final CSV: $OUTPUT_CSV"
+
