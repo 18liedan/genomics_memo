@@ -185,5 +185,3 @@ bwa-mem2 index mhe_ref_softmasked_auto.fa
 samtools faidx mhe_ref_softmasked_auto.fa
 gatk CreateSequenceDictionary -R mhe_ref_softmasked_auto.fa -O mhe_ref_softmasked_auto.dict
 ```
-#### Extract soft-masked sites using a [python script](./get_masked_regions.py) for downstream analyses where you want to remove repeated sites
-`python3 get_masked_regions.py mhe_ref_softmasked_auto.fa > mhe_ref_masked_regions.bed`
