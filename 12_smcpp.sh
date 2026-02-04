@@ -14,8 +14,8 @@ REF_FAI="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa.fai"
 SAMPLE_FILE="${SPECIES_ID}_ref/${SPECIES_ID}_samples_${SUBSET_ID}.txt"
 
 # Parameters
-MU="1.4e-8"
-GEN_TIME="7.64"
+MU="1.4e-8" # Change this for your species
+GEN_TIME="7.64" # Change this for your species
 KNOTS="16"
 T_START="1"
 T_END="100000"
