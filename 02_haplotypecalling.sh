@@ -172,24 +172,29 @@ if [[ ! -f "$INDELS_HARD" ]]; then
     gatk IndexFeatureFile -I "$INDELS_HARD"
 fi
 
-# 4c: SNP Softfiltering (Missingness/MAF)
-SNPS_SOFT="${VCF_DIR}/${SPECIES_ID}_filtered.snps.vcf.gz"
-if [[ ! -f "$SNPS_SOFT" ]]; then
-    log "  - 4c: Softfiltering (Max-missing 0.85, MAF 0.05)"
-    vcftools --gzvcf "$SNPS_HARD" --max-missing 0.85 --maf 0.05 --recode --stdout | bgzip -@ 16 -c > "$SNPS_SOFT"
-    gatk IndexFeatureFile -I "$SNPS_SOFT"
-fi
-
-# 4d: Filter out repeat masker sites
-NOREPEAT_VCF="${VCF_DIR}/${SPECIES_ID}_norepeat_filtered.snps.vcf.gz"
+# 4c: Filter out repeat masker sites
+NOREPEAT_VCF="${VCF_DIR}/${SPECIES_ID}_norepeat.snps.vcf.gz"
 if [[ ! -f "$NOREPEAT_VCF" ]]; then
     if [[ -f "$MASK_BED" ]]; then
         log "  - 4d: Excluding Masked Regions"
-        vcftools --gzvcf "$SNPS_SOFT" --exclude-bed "$MASK_BED" --recode --stdout | bgzip -@ 16 -c > "$NOREPEAT_VCF"
+        vcftools --gzvcf "$SNPS_HARD" \
+		--exclude-bed "$MASK_BED" \
+		--recode --stdout | bgzip -@ 16 -c > "$NOREPEAT_VCF"
         gatk IndexFeatureFile -I "$NOREPEAT_VCF"
     else
         log "  - Warning: Mask BED not found. Skipping Step 4d."
     fi
+fi
+
+# 4d: SNP Softfiltering (Missingness/MAF) # adjust parameters as you wish
+SNPS_SOFT="${VCF_DIR}/${SPECIES_ID}_softfiltered_norepeat_biallelic.snps.vcf.gz"
+if [[ ! -f "$SNPS_SOFT" ]]; then
+    log "  - 4c: Softfiltering (Max-missing 0.85, MAF 0.05)"
+    vcftools --gzvcf "$NOREPEAT_VCF" \
+	--max-missing 0.85 --maf 0.05 \
+	--max-alleles 2 --min-alleles 2 \
+	--recode --stdout | bgzip -@ 16 -c > "$SNPS_SOFT"
+    gatk IndexFeatureFile -I "$SNPS_SOFT"
 fi
 
 ###############################################################################
@@ -203,9 +208,8 @@ SUMMARY_OUT="${SPECIES_ID}_stats/${SPECIES_ID}_variant_summary.txt"
     echo -ne "Raw_Genotyped_VCF (DP_Filtered)\t"; bcftools view -H "$GENOTYPED_VCF" | wc -l
     echo -ne "HardFiltered_SNPs\t"; bcftools view -H "$SNPS_HARD" | wc -l
     echo -ne "HardFiltered_Indels\t"; bcftools view -H "$INDELS_HARD" | wc -l
-    echo -ne "SoftFiltered_SNPs\t"; bcftools view -H "$SNPS_SOFT" | wc -l
-    if [[ -f "$NOREPEAT_VCF" ]]; then
-        echo -ne "Final_NoRepeat_SNPs\t"; bcftools view -H "$NOREPEAT_VCF" | wc -l
+    echo -ne "Final_NoRepeat_SNPs\t"; bcftools view -H "$NOREPEAT_VCF" | wc -l
+	echo -ne "SoftFiltered_SNPs\t"; bcftools view -H "$SNPS_SOFT" | wc -l
     fi
 } > "$SUMMARY_OUT"
 
