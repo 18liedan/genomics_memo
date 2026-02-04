@@ -67,7 +67,7 @@ run_roh_pipeline() {
             --out "$INPUT_BFILE_PREFIX" > /dev/null
     fi
 	
-    # B. Robust Population Update
+    # B. Population Labels Update
     local SUBSET_POP_MAP="${SPECIES_ID}_vcf_bqsr/${SUBSET}/${POP_MAP}"
     if [ -f "$SUBSET_POP_MAP" ]; then
         echo "   [$SUBSET] Applying population identifiers..."
