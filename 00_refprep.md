@@ -173,12 +173,7 @@ bedtools complement -i - -g genome.sizes | \
 awk 'BEGIN{FS="\t"; OFS="\t"} {$2=$2+1; print $1, $2, $3}' > mhe_nonmasked_regions.txt
 angsd sites index mhe_nonmasked_regions.txt
 ```
-#### Index final reference genome
-```
-bwa-mem2 index ge_ref_softmasked_auto.fa
-samtools faidx ge_ref_softmasked_auto.fa
-gatk CreateSequenceDictionary -R ge_ref_softmasked_auto.fa -O ge_ref_softmasked_auto.dict
-```
+
 #### Index final reference genome
 ```
 bwa-mem2 index mhe_ref_softmasked_auto.fa
