@@ -30,8 +30,8 @@ ggplot(all_data, aes(x = x, y = y, group = interaction(label, population), color
   
   # --- X-AXIS CONFIGURATION ---
   scale_x_log10(
-    # 1. Manually force the breaks to be integers (1000, 10000, etc.)
-    breaks = c(1000, 10000, 100000, 1000000),
+    # 1. Manually force the breaks to be integers
+    breaks = c(100, 1000, 10000, 100000, 1000000),
     
     # 2. Format labels as 10^x
     # We use trans_format combining log10 and math_format for the cleanest look
@@ -40,8 +40,8 @@ ggplot(all_data, aes(x = x, y = y, group = interaction(label, population), color
   
   scale_y_log10(labels = scales::comma) +
   
-  # Crop to view range (Adjusted to start at 100 so the line to 10^3 is visible)
-  coord_cartesian(xlim = c(1000, 1000000)) + 
+  # Crop to view range
+  coord_cartesian(xlim = c(100, 1000, 1000000)) + 
   
   theme_bw() +
   labs(x = "Years Ago (g=9.93)", 
