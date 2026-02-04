@@ -1,0 +1,143 @@
+#!/bin/bash
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
+# 1. Configuration & Resource Allocation
+# ------------------------------------------------------------------------------
+SPECIES_ID="yourspecies"
+SUBSETS=("subset0") # Add your subset here
+
+# Resource Allocation (Optimized for NIG supercomputers)
+MAX_JOBS=12               # Number of subsets to run in parallel
+THREADS_PER_JOB=12       # Threads per PLINK process
+MEMORY_PER_JOB=64000     # Memory in MB per PLINK process
+
+# Executables
+PLINK="plink"
+
+# Filtering Logic (Applied during VCF conversion)
+GENO="0.1"
+MAF="0.01"
+
+# Refined ROH Parameters
+# --homozyg-snp 50: minimum SNPs to call a run
+# --homozyg-kb 100: minimum length (100kb)
+# --homozyg-window-het 1: allow 1 error to avoid breaking runs
+ROH_PARAMS="--homozyg-snp 50 --homozyg-kb 100 --homozyg-density 50 --homozyg-gap 1000 --homozyg-window-snp 50 --homozyg-window-het 1 --homozyg-window-missing 5 --homozyg-window-threshold 0.05"
+
+# ------------------------------------------------------------------------------
+# 2. Main Analysis Function
+# ------------------------------------------------------------------------------
+run_roh_pipeline() {
+    local SUBSET=$1
+    echo "[START] Processing Species: $SPECIES_ID | Subset: $SUBSET"
+
+    # Directory Setup (Subset-specific)
+    local BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local ROH_OUTDIR="${BASE_DIR}/${SPECIES_ID}_roh/${SUBSET}"
+    local BIN_DIR="${ROH_OUTDIR}/plink_binary" # copy your plink binaries to your ROH directory
+    local R_DIR="${ROH_OUTDIR}/r_files"
+    local VAL_RAW_DIR="${ROH_OUTDIR}/validation_raw"
+    local LOG_DIR="${ROH_OUTDIR}/logs"
+
+    mkdir -p "$BIN_DIR" "$R_DIR" "$VAL_RAW_DIR" "$LOG_DIR"
+
+    # Input/Output Prefixes
+    # Dynamic VCF path based on subset folder
+    local VCF_SOURCE="${SPECIES_ID}_vcf_bqsr/${SUBSET}/${SPECIES_ID}_${SUBSET}_softfiltered_norepeat_biallelic.snps.vcf.gz"
+    local OUTPUT_PREFIX="${SPECIES_ID}_${SUBSET}"
+    local INPUT_BFILE_PREFIX="${BIN_DIR}/${OUTPUT_PREFIX}.filtered"
+    local SIM_PREFIX="${BIN_DIR}/${OUTPUT_PREFIX}.sim_ref"
+    local FINAL_ROH_OUT="${R_DIR}/${OUTPUT_PREFIX}.final"
+    local SIM_ROH_OUT="${R_DIR}/${OUTPUT_PREFIX}.sim_ref"
+    local POP_MAP="pop_id.txt" # Assumes this is inside the subset folder
+    local HOM_IND_ID="REF_HOMOZYGOUS"
+
+    # A. VCF -> BED # set --chr or --allow-extra-chr or --autosome-num, depending on your species
+    if [ ! -f "${INPUT_BFILE_PREFIX}.bed" ]; then
+        echo "   [$SUBSET] Converting VCF and applying filters (Geno: $GENO, MAF: $MAF)..."
+        "$PLINK" --vcf "${BASE_DIR}/${VCF_SOURCE}" \
+            --make-bed \
+            --biallelic-only strict \
+            --geno "$GENO" \
+            --maf "$MAF" \
+            --allow-extra-chr \
+            --no-sex --no-parents --double-id --no-pheno \
+            --threads "$THREADS_PER_JOB" --memory "$MEMORY_PER_JOB" \
+            --out "$INPUT_BFILE_PREFIX" > /dev/null
+    fi
+	
+    # B. Robust Population Update
+    local SUBSET_POP_MAP="${SPECIES_ID}_vcf_bqsr/${SUBSET}/${POP_MAP}"
+    if [ -f "$SUBSET_POP_MAP" ]; then
+        echo "   [$SUBSET] Applying population identifiers..."
+        
+        # 1. Clean the pop_map: 
+        # - Remove carriage returns (\r)
+        # - Trim leading/trailing whitespace
+        # - Keep only unique lines
+        # - Map: OldFID(Sample) OldIID(Sample) NewFID(Pop) NewIID(Sample)
+        sed 's/\r//g; s/^[[:space:]]*//; s/[[:space:]]*$//' "$SUBSET_POP_MAP" | \
+        awk 'NR>1 && $1!="" && $2!="" { print $2, $2, $1, $2 }' | \
+        sort -u > "${ROH_OUTDIR}/id_update.tmp"
+        
+        if [ ! -s "${ROH_OUTDIR}/id_update.tmp" ]; then
+            echo "      [ERROR] id_update.tmp is empty. Check pop_id.txt format!"
+        else
+            # 2. Apply update
+            "$PLINK" --bfile "$INPUT_BFILE_PREFIX" \
+                --update-ids "${ROH_OUTDIR}/id_update.tmp" \
+                --make-bed \
+                --allow-extra-chr \
+                --out "${INPUT_BFILE_PREFIX}_up" \
+                --noweb > /dev/null
+                
+            mv "${INPUT_BFILE_PREFIX}_up.bed" "${INPUT_BFILE_PREFIX}.bed"
+            mv "${INPUT_BFILE_PREFIX}_up.bim" "${INPUT_BFILE_PREFIX}.bim"
+            mv "${INPUT_BFILE_PREFIX}_up.fam" "${INPUT_BFILE_PREFIX}.fam"
+        fi
+        rm -f "${ROH_OUTDIR}/id_update.tmp"
+    fi
+
+    # C. Create Simulated Reference
+    if [ ! -f "${SIM_PREFIX}.bed" ]; then
+        echo "   [$SUBSET] Generating simulated reference..."
+        awk '{print $1, $2, $3, $4}' "${INPUT_BFILE_PREFIX}.bim" > "${SIM_PREFIX}.map"
+        local NUM_SNPS=$(wc -l < "${SIM_PREFIX}.map" | tr -d '[:space:]')
+        { printf "%s %s 0 0 0 -9" "$HOM_IND_ID" "$HOM_IND_ID"; awk -v n="$NUM_SNPS" 'BEGIN{for(i=1;i<=n;i++) printf " A A"}'; printf "\n"; } > "${SIM_PREFIX}.ped"
+        "$PLINK" --file "$SIM_PREFIX" --make-bed --out "$SIM_PREFIX" --allow-extra-chr --noweb > /dev/null
+        rm -f "${SIM_PREFIX}.ped" "${SIM_PREFIX}.map"
+    fi
+
+    # D. Main ROH Runs
+    echo "   [$SUBSET] Running Main ROH Analysis..."
+    "$PLINK" --bfile "$SIM_PREFIX" --homozyg $ROH_PARAMS --out "$SIM_ROH_OUT" --allow-extra-chr --noweb > /dev/null
+    "$PLINK" --bfile "$INPUT_BFILE_PREFIX" --homozyg $ROH_PARAMS --out "$FINAL_ROH_OUT" --allow-extra-chr --noweb > /dev/null
+
+    # E. Validation Loops
+    echo "   [$SUBSET] Running Validation Sweeps..."
+    for d in 20 50 100; do
+        local tmp_pref="${VAL_RAW_DIR}/val_density_${d}"
+        "$PLINK" --bfile "$INPUT_BFILE_PREFIX" --homozyg $ROH_PARAMS --homozyg-density "$d" --out "$tmp_pref" --allow-extra-chr --noweb >/dev/null 2>&1 || true
+        if [ -f "${tmp_pref}.hom" ]; then
+            awk -v v="$d" 'NR>1 {id=$1"\t"$2; sum[id]+=($8-$7)} END{for(i in sum) print v"\t"i"\t"sum[i]/1000000}' "${tmp_pref}.hom" >> "${R_DIR}/val_summary_density.txt"
+        fi
+    done
+
+    mv "${BIN_DIR}"/*.log "${LOG_DIR}/" 2>/dev/null || true
+    mv "${R_DIR}"/*.log "${LOG_DIR}/" 2>/dev/null || true
+    echo "[FINISH] Subset $SUBSET complete."
+}
+
+# ------------------------------------------------------------------------------
+# 3. Execution Engine (Parallel)
+# ------------------------------------------------------------------------------
+export -f run_roh_pipeline
+export SPECIES_ID PLINK GENO MAF ROH_PARAMS THREADS_PER_JOB MEMORY_PER_JOB
+
+echo "Starting Parallel ROH Pipeline for $SPECIES_ID..."
+# Use xargs to handle parallel subset processing
+printf "%s\n" "${SUBSETS[@]}" | xargs -I {} -P "$MAX_JOBS" bash -c 'run_roh_pipeline "{}"'
+
+echo "-----------------------------------------------------------------"
+echo "All processing complete. Results in: ${SPECIES_ID}_roh/"
