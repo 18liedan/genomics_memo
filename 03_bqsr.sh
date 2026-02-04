@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#This script automates BQSR steps for each sample.
+#This script automates BQSR steps for each sample, using reliable variants called in the previous step.
 
 ###############################################################################
 # RESOURCE ALLOCATION & CONFIGURATION
@@ -15,13 +15,13 @@ JAVA_OPTS="-Xmx64g"      # 12 * 64GB = 768GB
 
 # PATHS
 REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
-SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt"
+SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt" # include all samples here
 BAM_DIR="${SPECIES_ID}_mapped"
 VCF_DIR="${SPECIES_ID}_vcf"
 BQSR_DIR="${SPECIES_ID}_bqsr"
 
-# Known sites from previous script (SNPs should be repeat masked)
-KNOWN_SNPS="${VCF_DIR}/${SPECIES_ID}_norepeat_filtered.snps.vcf.gz"
+# Known sites produced from previous step (SNPs should be repeat masked)
+KNOWN_SNPS="${VCF_DIR}/${SPECIES_ID}_softfiltered_norepeat_biallelic.snps.vcf.gz"
 KNOWN_INDELS="${VCF_DIR}/${SPECIES_ID}_hardfilteredpass.indels.vcf.gz"
 
 mkdir -p "$BQSR_DIR"
