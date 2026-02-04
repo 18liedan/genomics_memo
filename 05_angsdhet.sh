@@ -11,14 +11,14 @@ SPECIES_ID="yourspecies"
 # PATHS TO EXECUTABLES
 ANGSD_PATH="angsd" # Directory containing 'misc/realSFS'
 
-# RESOURCE ALLOCATION
+# RESOURCE ALLOCATION (Optimized for NIG supercomputer; 1.5TB RAM / 192 Cores)
 MAX_JOBS=12              
-THREADS_PER_JOB=8          
+THREADS_PER_JOB=12          
 
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
 SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt"
-NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.txt"
+NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.txt" # See 00_refprep.md for how to make this file.
 INPUT_BAM_DIR="${SPECIES_ID}_bqsr"
 OUTPUT_SFS_DIR="${SPECIES_ID}_sfs"
 
