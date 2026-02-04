@@ -16,7 +16,7 @@ COHORT_JAVA_OPTS="-Xmx256g"
 
 # PATHS
 REF="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
-SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples_hq.txt"
+SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples_hq.txt" # use individuals with high coverage to specifically get reliable variants
 MASK_BED="${SPECIES_ID}_ref/${SPECIES_ID}_ref_masked_regions.bed"
 # Coverage TSV (Assumes format: SampleID [tab] CoverageValue)
 COVERAGE_STATS="${SPECIES_ID}_stats/${SPECIES_ID}_coverage_summary.tsv"
