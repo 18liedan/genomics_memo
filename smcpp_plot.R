@@ -44,7 +44,7 @@ ggplot(all_data, aes(x = x, y = y, group = interaction(label, population), color
   coord_cartesian(xlim = c(100, 1000, 1000000)) + 
   
   theme_bw() +
-  labs(x = "Years Ago (g=9.93)", 
+  labs(x = "Years Ago (g=9.93)", # use your species' generation time
        y = "Effective Population Size (Ne)") +
   theme(
     panel.grid.minor = element_blank()
