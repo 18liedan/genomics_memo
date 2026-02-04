@@ -22,7 +22,7 @@ Further manual filtering, tailored for your species/population/downstream analys
 
 🪢 06_angsdstats.sh is a script to run ANGSD to calculate nucleotide diversity, Tajima's D, etc using sfs.
 
-🪢 07_roh.sh is a script to run PLINK to calculate runs of homozygosity for all samples.
+🪢 [07_roh.sh](07_roh.sh) is a script to run PLINK to calculate runs of homozygosity for all samples.
 - [roh_plot.R](./roh_plot.R) is a custom R script used to plot ROH results.
 
 📍 [08_pca.md](./08_pca.md) is a series of command line to manually run PCA on samples.
