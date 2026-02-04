@@ -18,7 +18,7 @@ THREADS_PER_JOB=8
 # PATH DEFINITIONS
 REF_GENOME="${SPECIES_ID}_ref/${SPECIES_ID}_ref_softmasked_auto.fa"
 SAMPLE_LIST="${SPECIES_ID}_ref/${SPECIES_ID}_samples.txt"
-NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.regions"
+NONMASKED_REGIONS="${SPECIES_ID}_ref/${SPECIES_ID}_nonmasked_sites.txt"
 INPUT_BAM_DIR="${SPECIES_ID}_bqsr"
 OUTPUT_SFS_DIR="${SPECIES_ID}_sfs"
 
@@ -66,7 +66,7 @@ run_angsd_het() {
     local sample="$1"
     local INPUT_BAM="${INPUT_BAM_DIR}/${sample}_bqsr.bam"
     local OUTPUT_PREFIX="${OUTPUT_SFS_DIR}/${sample}"
-	local INCLUDE_REGIONS="${NONMASKED_REGIONS}"
+    local INCLUDE_REGIONS="${NONMASKED_REGIONS}"
     local EST_FILE="${OUTPUT_PREFIX}.est.ml"
     local COV_FILE="${OUTPUT_SFS_DIR}/${sample}.samtools_cov.txt"
 
@@ -104,13 +104,13 @@ run_angsd_het() {
             -doCounts 1 \
             -minMapQ 30 \
             -minQ 20 \
-			-C 50 \
+            -C 50 \
             -remove_bads 1 \
             -uniqueOnly 1 \
             -baq 1 \
             -setMinDepth "$MIN_DP" \
             -setMaxDepth "$MAX_DP" \
-			-rf "$INCLUDE_REGIONS"
+            -sites "$INCLUDE_REGIONS"
     else
         echo "-> SAF index already exists for $sample. Skipping to realSFS."
     fi
