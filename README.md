@@ -31,7 +31,7 @@ Further manual filtering, tailored for your species/population/downstream analys
 
 📍 [10_angsdfst.sh](10_angsdfst.sh) is a script to run ANGSD to calculate Fst between designated datasets.
 
-🕰️ 11_psmc.sh is a script to run PSMC on all samples.
+🕰️ [11_psmc.sh](11_psmc.sh) is a script to run PSMC on all samples.
 
 🕰️ [12_smcpp.sh](12_smcpp.sh) is a script to run SMC++ on all samples, with bootstrapping. I run the software through singularity because I don't have admin priviledges in my cluster, but docker works too if you can use sudo and install necessary files (i.e. you have root permission).
 - the following python script was used for bootstrapping: https://github.com/popgenmethods/smcpp/files/1182555/bootstrap_smcpp.zip
